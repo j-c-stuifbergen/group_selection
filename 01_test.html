@@ -1,0 +1,88 @@
+<html><!DOCTYPE html>
+<html>
+<body>
+
+<h2>JavaScript Arrays</h2>
+
+<p id="pict_out">
+<svg id="3Dscreen" width="400" height="400" viewbox="-200 -200 400 400" onmousedown='alert("mouse down in svg! good!")'>
+  <circle id="bigSun" cx="-0" cy="-100" r="200" stroke="green" stroke-width="4" fill="yellow" />
+  <circle id="center" cx="-0" cy="00" r="4" stroke="#999" stroke-width="4" fill="green" />
+</svg>
+</p>
+<p id="message">Hier kan een foutmelding komen </p><hr>
+<p id="text_out"></p>
+
+<script>
+
+let displayText = ""
+
+nPlaces = 80;
+nIndividuals = 80;
+n40 = 1;
+n50 = 1;
+nCandidates = 40*n40+50*n50+nIndividuals
+// create possible combinations
+var v = [];
+nGroups = [nIndividuals,n40,n50]
+groupSizes = [1, 40, 50]
+v[0] = [nPlaces - 40,40,0]; //  individuals + 1 group of 40
+v[1] = [nPlaces - 50,0,50]; //  individuals + 1 group of 50
+	displayText += "v = "+v +"<br>";
+v[2] = [80,0,0]; // 
+	displayText += "v = "+v +"<br>";
+	displayText += "v length= "+v.length +"<br>";
+var p=[];
+var pTotal =0;
+// initialise probabilities 
+for (let i = 0; i< v.length ; i++)
+{	p[i]=1./v.length;
+}
+var a = [];
+nIterations = 30;
+for (let k = 0; k< nIterations ; k++)
+{
+	for (let j = 0; j<v[0].length; j++)
+	{
+		a[j] = 0;
+		for (let i = 0; i< v.length ; i++)
+		{	a[j] += p[i]*v[i][j] // p[i]/pTotal*v[i][j];
+		}
+		a[j]=a[j]/(nGroups[j]*groupSizes[j])
+		// a[j]=a[j]/a[0]; // for easier comparison
+	}
+		
+	qTotal = 0;
+	q = []
+	for (let i = 0; i< v.length ; i++)
+	{	q[i]=0;
+		for (let j = 0; j<v[0].length; j++)
+		{
+			q[i]+=v[i][j]*(-a[j]) //  /nGroups[j] ;
+		}
+		qTotal+=q[i];
+	}
+	pTotal = 0;
+	for (let i = 0; i< v.length ; i++)
+	{	p[i]+=q[i]
+		pTotal+=p[i];
+	}
+	for (let i = 0; i< v.length ; i++)
+	{	p[i]=p[i]/pTotal
+	}
+	displayText += "iteration = "+k +"<br>";
+	displayText += "p = "+p +"<br>";
+	displayText += "p0/p1 = "+p[0]/p[1] +"<br>";
+	displayText += "a = "+a +"<hr>";
+	document.getElementById("text_out").innerHTML = displayText;
+}
+
+
+
+
+</script>
+
+</body>
+</html>
+
+</script>

@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+<body>
+
+<h2>JavaScript Arrays</h2>
+
+<p id="text_out">hoi</p>
+<script src="./js/groupSelection.js"></script>
+<script>
+
+let displayText = ""
+nPlaces = 80;
+// groupSizes =[1,2,3,4,5,7,12]
+// nGroups = [60,21,4,3,2,1,1]
+// groupSizes =[1,2,3,4,5,7,12,20,50]
+// nGroups = [50,15,6,3,2,1,1,2,1]
+groupSizes =[1,40,50]
+nGroups = [80,1,1]
+nIterations =150
+//nIndividuals = 40;
+n40 = 1;
+n50 = 1;
+
+// create possible combinations
+var v = [];
+v.push([nPlaces,0,0]); // only individuals
+v.push([nPlaces - 40,1,0]); //  individuals + 1 group of 40
+v.push([nPlaces - 50,0,1]); //  individuals + 1 group of 50
+
+optimizer = new groups(nPlaces,groupSizes,nGroups)
+
+optimizer.setCombinations()
+console.log("combinations")
+let comb = optimizer.showCombinations("\r\n")
+console.log(comb["combinations"])
+console.log(comb["calculations"])
+
+p = optimizer.setProbabilities(nIterations)
+
+displayText += "chance should be "+nPlaces+" / "+optimizer.nCandidates+" = "+optimizer.pAim +"<br>";
+displayText += "iteration = "+nIterations +"<br>";
+// displayText += "p = "+p +"<br>";
+// displayText += "individual chances = "+optimizer.pIndividuals(p,true)
+displayText += "individual chances :<br> "
+var pRelative = optimizer.pIndividuals(p,true)
+for (let i =0; i<pRelative.length; i++)
+{
+	displayText += i+": "+nGroups[i]+" groups of size "+groupSizes[i]+" deviate from the average by "+pRelative[i]+"<br>"
+}
+displayText += "<br> individual chance should be "+optimizer.pAim
+
+displayText +="<br>ready<br>";
+
+
+document.getElementById("text_out").innerHTML = displayText;
+
+</script>
+
+
+</body>
+</html>
+
+
+
