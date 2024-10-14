@@ -27,21 +27,22 @@ n50 = 1;
 optimizer = new groups(nPlaces,groupSizes,nGroups)
 
 optimizer.setCombinations()
+optimizer.selectAllCombinations()
 console.log("combinations")
 
 displayText += "chance should be "+nPlaces+" / "+optimizer.nCandidates+" = "+optimizer.pAim +"<br>";
 
-for (let i=0; i<10 && i<optimizer.combinations.length; i++)
+for (let i=0; i<10 && i<optimizer.selection.length; i++)
 {
 	displayText += htmlFromArray(optimizer.combinations[i]) + "<br>"
 	displayText += optimizer.calculationString(i) + "<br>"
 }
 document.getElementById("text_out").innerHTML = displayText;
-let comb = optimizer.showCombinations("\r\n")
+let comb = optimizer.showCombinations(optimizer.selection,"\r\n")
 console.log(comb["combinations"])
 console.log(comb["calculations"])
 
-optimizer.initialProbabilities(nIterations)
+optimizer.initialProbabilities()
 p = optimizer.improveProbabilities(nIterations)
 
 displayText += "iteration = "+nIterations +"<br>";

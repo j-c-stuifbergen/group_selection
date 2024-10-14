@@ -39,6 +39,7 @@ function groups(nPlaces, groupSizes, nGroups)
 	this.nGroups = nGroups  // e.g. [40, 8, 2, 1] for 40 individuals, 8 duos, 2 trios...
 	this.nIndividuals = []
 	this.combinations = [] // an array of combinations that fill all places
+	this.selection = []
 	this.p = [] // probabilities, belonging to combinations.
 	this.pAim = this.averageP()
 }
@@ -52,76 +53,70 @@ groups.prototype.individuals = function(groupSizes, nGroups)
 	return result
 }
 
-groups.prototype.derivative = function(p, combins)
+groups.prototype.derivative = function()
 {	var q = []; // used to adapt p, store deviations from desired probabilities
 	// calculate probabilities per individual 
-	let a = this.pIndividuals(p)
+	let a = this.pIndividuals(this.p)
 	console.log("kansen: "+ a)
 
 	// calculate difference from desired probability
-	for (let i = 0; i< combins.length ; i++)
+	for (let i = 0; i< this.selection.length ; i++)
 	{	q[i]=0;
-		for (let j = 0; j<combins[0].length; j++)
+		for (let j = 0; j<this.groupSizes.length; j++)
 		{
 		  // give extra weight if a deviation affects more persons
-		  q[i]+=(this.pAim - a[j])*combins[i][j]*this.groupSizes[j];
+		  q[i]+=(this.pAim - a[j])*this.selection[i][j]*this.groupSizes[j];
 		  // don't make chances negative
-		  if (q[i] < 0 && 0 ===p[i])
+		  if (q[i] < 0 && 0 ===this.p[i])
 		  {	q[i] = 0
 		  }
 		}
 	}
 	return q
 }
-groups.prototype.initialProbabilities = function(combins)
+groups.prototype.initialProbabilities = function()
 {	
-	p=[];
-	for (let i = 0; i< combins.length ; i++)
-	{	p[i]=1/combins.length;
+	this.p=[];
+	for (let i = 0; i< this.selection.length ; i++)
+	{	this.p[i]=1/this.selection.length;
 	}
 	
-	return p
+	return this.p
 }
-groups.prototype.improveProbabilities = function(nIterations,notNegP, p = null, stepFactor = 1.001, combins = this.combinations)
+groups.prototype.improveProbabilities = function(nIterations, stepFactor = 1.001)
 // at each iteration, adaptfactor will be multiplied by stepfactor
 {
-	if (null == notNegP)
-	{	notNegP = 0.0001/combins.length
-	}
-	if (null == p)
-	{	this.p = this.initialProbabilities(combins)
-	}
-	else
-	{	this.p = p
+	if (null == this.p)
+	{	this.p = this.initialProbabilities(this.selection)
 	}
 	var maxWeight = 0;
 	for(i = 0; i<this.groupSizes.length; i++)
 	{	maxWeight = Math.max(maxWeight,this.groupSizes[i]*this.nGroups[i])
 	}
 
-	var adaptFactor = 0.5/maxWeight/combins.length
+	var adaptFactor = 0.5/maxWeight/this.selection.length
 	console.log("adaptFactor = "+adaptFactor)
 		
 	for (let k = 0; k< nIterations ; k++)
 	{
-		q= this.derivative(this.p, combins)
+		q= this.derivative()
 		q2 = 0
 		for(let i=0; i<q.length; i++)
 		{	q2 += q[i]*q[i];
 		}
 		console.log("iteration "+k+", the norm of the derivative is "+Math.sqrt(q2))
 		var pTotal = 0
-		for (let i = 0; i< combins.length ; i++)
+		for (let i = 0; i< this.selection.length ; i++)
 		{	this.p[i]+=(q[i])*adaptFactor
 			
 			// correct for overshoot
 			if (this.p[i]<0)
-			{	this.p[i]=notNegP
+			{	this.p[i]=0
 			}
 			pTotal+=this.p[i]
 		}
 		console.log("coeff : "+this.p)
-		for (let i = 0; i< combins.length ; i++)
+		for (let i = 0; i< this.selection.length ; i++)
 		{	
 			// this.p[i]=this.p[i]/pTotal
 		}
@@ -140,15 +135,15 @@ groups.prototype.averageP= function()
 	}
 	return this.nPlaces/this.nCandidates;
 }
-groups.prototype.pIndividuals = function(p,relative = false, combins = this.combinations)
+groups.prototype.pIndividuals = function(p,relative = false)
 {
 	var e = [];// expected number of groups that will have a place
 	var a = []; // a[j]=e[j]/nGroups[j]; probability that a member of these groups will have a place
-	for (let j = 0; j<combins[0].length; j++)
+	for (let j = 0; j<this.selection[0].length; j++)
 	{
 		e[j] = 0; // expected number of groups of groupSize[j]
-		for (let i = 0; i< combins.length ; i++)
-		{	e[j] += p[i]*combins[i][j];
+		for (let i = 0; i< this.selection.length ; i++)
+		{	e[j] += p[i]*this.selection[i][j];
 		}
 		a[j]=e[j]/this.nGroups[j];
 		if (relative ==true)
@@ -156,6 +151,9 @@ groups.prototype.pIndividuals = function(p,relative = false, combins = this.comb
 		}
 	}
 	return a
+}
+groups.prototype.selectAllCombinations = function()
+{	this.selection = this.combinations
 }
 groups.prototype.setCombinations = function()
 {
@@ -197,10 +195,10 @@ groups.prototype.setCombinations = function()
 
 	this.combinations = recursivePart(this.nPlaces,this.nGroups)
 }
-groups.prototype.calculationString = function(i, combins = this.combinations)
+groups.prototype.calculationString = function(i, combins = this.selection)
 {	
 	if (combins.length <= i)
-	{	return "There are not more than " + combins.length +" combinations."
+	{	return "There are not more than " + combins.length +" selected combinations."
 			+ i + " is too big."
 	}
 	var result = ""
@@ -215,13 +213,13 @@ groups.prototype.calculationString = function(i, combins = this.combinations)
 	
 	return result 
 }
-groups.prototype.showCombinations = function(combins = this.combinations, newLine = "<br>") // for console: "\r\n"
+groups.prototype.showCombinations = function(combins = this.selection, newLine = "<br>") // for console: "\r\n"
 {
 	let combinationString = ""
 	let calcStr = ""
 	for (let i = 0; i<combins.length; i++)
 	{	combinationString += "["+combins[i]+"]"+newLine
-		calcStr+= this.calculationString(i)+newLine
+		calcStr+= this.calculationString(i, combins)+newLine
  	}
 	return {"combinations":combinationString, "calculations": calcStr}
 }
