@@ -66,6 +66,8 @@ for (let i =0; i<pRelative.length; i++)
 	displayText += i+": "+nGroups[i]+" groups of size "+groupSizes[i]+" deviate from the average by "+pRelative[i]+"<br>"
 }
 displayText += "<br> individual chance should be "+optimizer.pAim
+displayText += "<br>  "+optimizer.chancesTable(null,p)
+
 
 displayText +="<br>ready<br>";
 

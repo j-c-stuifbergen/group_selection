@@ -186,7 +186,7 @@ groups.prototype.averageP= function()
 	return this.nPlaces/this.nCandidates;
 }
 groups.prototype.pIndividuals = function(p,relative = false)
-{
+{	// p contains the probability of vectors in de selection
 	var e = [];// expected number of groups that will have a place
 	var a = []; // a[j]=e[j]/nGroups[j]; probability that a member of these groups will have a place
 	for (let j = 0; j<this.selection[0].length; j++)
@@ -282,6 +282,44 @@ groups.prototype.calculationTeX = function(i, combins = this.selection)
 	
 	return result 
 }
+
+groups.prototype.chancesTable = function(pIndividuals = null, pVectors)
+{	
+	if (null == pIndividuals)
+	{	pIndividuals = this.pIndividuals(pVectors, false)
+	}
+	
+	var result = "<table>"
+	result +=    "<tr><th>Groups of size</th>"
+		+    "<th>probability for persons<br>in this group </th><th>expected number <br> of groups of this size</th>"
+	result +=    "<th>Expected number <br>of persons</th></tr>"
+
+	var totalCandidates = 0
+	var totalAdmitted = 0
+	for (j=0; j<this.groupSizes.length; j++)
+	{	let nCandidates = (this.nGroups[j]*this.groupSizes[j])
+		let expectedGroups = (pIndividuals[j]*this.nGroups[j])
+		let expectedAdmitted = expectedGroups*this.groupSizes[j]
+		totalCandidates += nCandidates
+		totalAdmitted += (expectedAdmitted)
+		result += "<tr><td>" + this.nGroups[j]+" x " + this.groupSizes[j] 
+			+ " = " + nCandidates
+			+ "</td><td>"+pIndividuals[j] +"</td><td>" + 
+				pIndividuals[j]+"x"+this.nGroups[j] 
+			+ "=" 	+ expectedGroups
+			+ "</td><td>" +expectedGroups + " x " 
+			+ (this.groupSizes[j]) + " = "
+			+ expectedAdmitted
+			+ "</td> </tr> \n"
+	}
+	result += "<tr><th> total: "+totalCandidates+"</th>" +
+		  "<th>average P: "+this.pAim + "</th><td></td>" +
+		  "<th> total: "+totalAdmitted + "</th>" +
+		"</table>"
+	
+	return result 
+}
+
 groups.prototype.showCombinations = function(combins = this.selection, newLine = "<br>") // for console: "\r\n"
 {
 	let combinationString = ""
