@@ -12,22 +12,6 @@ function sumArray(q)
 	return result
 }
 
-/* make the total of p[] = 1
- * required: 0<=p[i] for each i
- * required: 0<sum of p[i]
- */
-function makeDistribution(p)
-{
-	var pTotal =0;
-	for (let i = 0; i< p.length ; i++)
-	{	pTotal+=p[i];
-	}	
-	for (let i = 0; i< p.length ; i++)
-	{	p[i]=p[i]/pTotal;
-	}
-	return p
-}
-
 function htmlFromArray(q)
 {	return "[" + q + "]" 
 }
@@ -37,18 +21,65 @@ function groups(nPlaces, groupSizes, nGroups)
 	this.nPlaces = nPlaces  // e.g. 80
 	this.groupSizes = groupSizes // e.g. [1, 2, 3, 5] : groups can be 1, 2, 3 persons
 	this.nGroups = nGroups  // e.g. [40, 8, 2, 1] for 40 individuals, 8 duos, 2 trios...
-	this.nIndividuals = []
+	this.pAim = this.averageP()
 	this.combinations = [] // an array of combinations that fill all places
 	this.selection = []
-	this.p = [] // probabilities, belonging to combinations.
-	this.pAim = this.averageP()
+	this.p = [] // probabilities, belonging to the selection.
 }
 
+groups.prototype.makeDistribution = function()
+{
+/* make the total of this.p[] = 1
+ * required: 0<=this.p[i] for each i
+ * required: 0<sum of this.p[i]
+ */
+	var pTotal =0;
+	for (let i = 0; i< this.p.length ; i++)
+	{	pTotal+=p[i];
+	}	
+	for (let i = 0; i< this.p.length ; i++)
+	{	this.p[i]=p[i]/pTotal;
+	}
+}
 
 groups.prototype.individuals = function(groupSizes, nGroups)
 {	result = new Array(groupSizes.length)
 	for (let i=0; i<result.length ; i++)
 	{	result[i] = groupSizes[i] * nGroups[i]
+	}
+	return result
+}
+
+groups.prototype.parabolaMin = function(fie, x=1.0)
+{
+	// y = c0 + c1 x + c2 x^2
+	delta = 0.5*x
+	y0 = fie(x-delta)
+	y1 = fie(x)
+	y2 = fie(x+delta)
+
+	c2 = (y0-2*y1+y2) / (4*delta)
+
+	y1 = y1-c2*x*x
+	c1 = (y1 - (y0-c2*(x-delta)*(x-delta))) / delta
+
+	//c0 = y1-c1*x
+
+	return c1 / (-2.0*c2)
+}
+
+groups.prototype.diff2 = function(v1, v2)
+{	result = 0
+	for( let i = 0; i<this.groupSizes.length; i++)
+	{	result += Math.pow(v1[i]-v2[i], 2) * groupSizes[i]
+	}
+	return result
+}
+
+Array.prototype.timesScalar = function(scalar)
+{	result = new Array(this.length)
+	for(let i = 0; i<this.length ; i++)
+	{	result[i] = this[i]*scalar
 	}
 	return result
 }
@@ -73,6 +104,25 @@ groups.prototype.derivative = function()
 		}
 	}
 	return q
+}
+groups.prototype.penalty = function(combi)
+{	var result = 0
+	for(let i = 0 ; i < this.groupSizes.length ; i++)
+	{	// delta^2 * number of individuals.
+		result += Math.pow(this.pAim - combi[i]/this.nGroups[i], 2) * this.nGroups[i] * this.groupSizes[i] 
+	}
+}
+groups.prototype.selectFirstCombination = function()
+{	this.selection = [this.combinations[0]]
+	penalty = this.penalty(this.selection[0])
+
+	for(let i = 1; i<this.combinations.length ; i++)
+	{	newPenalty = this.penalty(this.combinations[i])
+		if (newPenalty < penalty)
+		{	penalty = newPenalty
+			this.selection[0] = this.combinations[i]
+		}
+	}
 }
 groups.prototype.initialProbabilities = function()
 {	
@@ -210,6 +260,25 @@ groups.prototype.calculationString = function(i, combins = this.selection)
 	}
 	total +=  combins[i][j] * this.groupSizes[j]
 	result += combins[i][j]+"x"+this.groupSizes[j]+" = " + total
+	
+	return result 
+}
+
+groups.prototype.calculationTeX = function(i, combins = this.selection)
+{	
+	if (combins.length <= i)
+	{	return "There are not more than " + combins.length +" selected combinations."
+			+ i + " is too big."
+	}
+	var result = "\\begin{pmatrix}"
+	let total = 0
+	for (j=0; j<this.groupSizes.length; j++)
+	{	total +=  combins[i][j] * this.groupSizes[j]
+		result += 0<j? "\\\\ " : ""
+		result +=  "\\text{"+combins[i][j]+"x"+this.groupSizes[j] + "} &=& "
+				+ combins[i][j] * this.groupSizes[j]
+	}
+	result += "\\\\ \\text{total} &=& " + total +"\\end{pmatrix} "
 	
 	return result 
 }
