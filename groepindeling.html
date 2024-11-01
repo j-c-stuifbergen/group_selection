@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <html>
+<link rel="stylesheet" type="text/css" href="../index.css" /> 
+
 <body>
 
 <h2>JavaScript Arrays</h2>
@@ -45,9 +47,10 @@ else
 {
 displayText += "There are " +optimizer.nCandidates+ " candidats "
 		+ "for only "+ nPlaces + " places. <br>\n"
-displayText += "I am checking possible combinations. <br>\n"
+progressText = "I am checking possible combinations. <br>\n"
 	
 document.getElementById("text_out").innerHTML = displayText;
+document.getElementById("progress_message").innerHTML = progressText;
 
 console.log("trying combinations...")
 optimizer.setCombinations()
@@ -59,16 +62,22 @@ else
 {
 optimizer.selectAllCombinations()
 
-displayText += "number of combinations : "+ optimizer.selection.length+"<br> "
+displayText += "number of valid combinations : "+ optimizer.selection.length+"<br> "
+randomArr = shuffle(Array.from(Array(optimizer.selection.length).keys()))
 displayText += "Some valid combinations are: <br> \n $$ ";
 
-for (let i=0; i<10 && i<optimizer.selection.length; i++)
+for (let i=0; i<25 && i<randomArr.length; i++)
 {
 	
-	displayText +=  vector_to_TeX(optimizer.combinations[i])
-	// displayText += htmlFromArray(optimizer.combinations[i]) + "<br>"
-	// displayText += optimizer.calculationString(i) + "<br>"
-	displayText += optimizer.calculationTeX(i) 
+	displayText +=  vector_to_TeX(optimizer.combinations[randomArr[i]])
+}
+displayText += " $$ <br>";
+displayText += "(check some totals) <br> \n $$ ";
+
+for (let i=0; i<10 && i<randomArr.length; i++)
+{
+	
+	displayText += optimizer.calculationTeX(randomArr[i]) 
 }
 displayText += " $$ <br>";
 displayText += "Now setting probabilities to combinations... <br>";

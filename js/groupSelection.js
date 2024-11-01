@@ -4,6 +4,24 @@ groupSizes =[1,2,3,5]
 nGroups = [60,8,2,1] 60 individuals, 8 duos, 2 trios, 1 group of 5
 */
 
+function shuffle(array) 
+{  let currentIndex = array.length;
+
+  // While there remain elements to shuffle...
+  while (currentIndex != 0) {
+
+    // Pick a remaining element...
+    let randomIndex = Math.floor(Math.random() * currentIndex);
+//	console.log("randomIndex = "+ randomIndex)
+    currentIndex--;
+
+    // And swap it with the current element.
+        [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex], array[currentIndex]];
+  }
+  
+	return array
+}
 function sumArray(q)
 {	result = 0
 	for (let i=0; i<q.length ; i++)
