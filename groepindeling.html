@@ -5,7 +5,6 @@
 <h2>JavaScript Arrays</h2>
 
 <p id="text_out">processing... hit [F12] to view console.</p>
-<p id="progress_message"></p>
 
  <script type="text/javascript" async
   src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
@@ -92,7 +91,7 @@ for (let i =0; i<pRelative.length; i++)
 	displayText += i+": "+nGroups[i]+" groups of size "+groupSizes[i]+" deviate from the average by "+pRelative[i]+"<br>"
 }
 displayText += "<br> individual chance should be "+optimizer.pAim
-displayText += "<br>  "+optimizer.chancesTable(null,p)
+displayText += "<br>  "+optimizer.chancesTable(p,3,null)
 
 
 displayText +="<br>ready<br>";

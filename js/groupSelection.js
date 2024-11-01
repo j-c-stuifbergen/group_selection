@@ -283,7 +283,7 @@ groups.prototype.calculationTeX = function(i, combins = this.selection)
 	return result 
 }
 
-groups.prototype.chancesTable = function(pIndividuals = null, pVectors)
+groups.prototype.chancesTable = function(pVectors, nDigits = 3, pIndividuals = null)
 {	
 	if (null == pIndividuals)
 	{	pIndividuals = this.pIndividuals(pVectors, false)
@@ -303,18 +303,19 @@ groups.prototype.chancesTable = function(pIndividuals = null, pVectors)
 		totalCandidates += nCandidates
 		totalAdmitted += (expectedAdmitted)
 		result += "<tr><td>" + this.nGroups[j]+" x " + this.groupSizes[j] 
-			+ " = " + nCandidates
-			+ "</td><td>"+pIndividuals[j] +"</td><td>" + 
-				pIndividuals[j]+"x"+this.nGroups[j] 
-			+ "=" 	+ expectedGroups
-			+ "</td><td>" +expectedGroups + " x " 
+			+ " person(s) = " + nCandidates
+			+ "</td><td align='right'>"+pIndividuals[j].toFixed(8) +"</td>"
+			+ "<td align='right'>" 
+			+ this.nGroups[j] +	" x "+pIndividuals[j].toFixed(nDigits) 
+			+ " = " 	+ expectedGroups.toFixed(nDigits)
+			+ "</td><td align='right'>" +expectedGroups.toFixed(nDigits) + " x " 
 			+ (this.groupSizes[j]) + " = "
-			+ expectedAdmitted
+			+ expectedAdmitted.toFixed(nDigits)
 			+ "</td> </tr> \n"
 	}
-	result += "<tr><th> total: "+totalCandidates+"</th>" +
-		  "<th>average P: "+this.pAim + "</th><td></td>" +
-		  "<th> total: "+totalAdmitted + "</th>" +
+	result += "<tr><th align='right'> total: "+totalCandidates+"</th>" +
+		  "<th align='right'>average P: "+this.pAim.toFixed(nDigits) + "</th><td></td>" +
+		  "<th align='right'> total: "+totalAdmitted.toFixed(nDigits) + "</th>" +
 		"</table>"
 	
 	return result 
