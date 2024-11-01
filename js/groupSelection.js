@@ -133,7 +133,54 @@ groups.prototype.initialProbabilities = function()
 	
 	return this.p
 }
-groups.prototype.improveProbabilities = function(nIterations, stepFactor = 1.001)
+groups.prototype.improveProbabilities = function(nIterations, stepFactor = 1.001, htmlId = null)
+// at each iteration, adaptfactor will be multiplied by stepfactor
+{
+	if (null == this.p)
+	{	this.p = this.initialProbabilities(this.selection)
+	}
+	var maxWeight = 0;
+	for(i = 0; i<this.groupSizes.length; i++)
+	{	maxWeight = Math.max(maxWeight,this.groupSizes[i]*this.nGroups[i])
+	}
+
+	var adaptFactor = 0.5/maxWeight/this.selection.length
+	console.log("adaptFactor = "+adaptFactor)
+		
+	for (let k = 0; k< nIterations ; k++)
+	{
+		q= this.derivative()
+		q2 = 0
+		for(let i=0; i<q.length; i++)
+		{	q2 += q[i]*q[i];
+		}
+		message = "iteration "+k+", the norm of the derivative is "+Math.sqrt(q2) +"<br>\n"
+		var pTotal = 0
+		for (let i = 0; i< this.selection.length ; i++)
+		{	this.p[i]+=(q[i])*adaptFactor
+			
+			// correct for overshoot
+			if (this.p[i]<0)
+			{	this.p[i]=0
+			}
+			pTotal+=this.p[i]
+		}
+		message += "coeff : "+this.p
+		console.log(message)
+		if (null != htmlId)
+		{	document.getElementById(htmlId).innerHTML = message
+		}
+		for (let i = 0; i< this.selection.length ; i++)
+		{	
+			// this.p[i]=this.p[i]/pTotal
+		}
+		// p = this.makePdistribution(p)
+		adaptFactor *= stepFactor
+	}
+	return this.p
+}
+
+groups.prototype.improveProbabilitiesOud = function(nIterations, stepFactor = 1.001)
 // at each iteration, adaptfactor will be multiplied by stepfactor
 {
 	if (null == this.p)
@@ -315,7 +362,7 @@ groups.prototype.chancesTable = function(pVectors, nDigits = 3, pIndividuals = n
 	}
 	result += "<tr><th align='right'> total: "+totalCandidates+"</th>" +
 		  "<th align='right'>average P: "+this.pAim.toFixed(nDigits) + "</th><td></td>" +
-		  "<th align='right'> total: "+totalAdmitted.toFixed(nDigits) + "</th>" +
+		  "<th align='right'> total: "+totalAdmitted.toFixed(9) + "</th>" +
 		"</table>"
 	
 	return result 

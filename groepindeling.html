@@ -5,6 +5,7 @@
 <h2>JavaScript Arrays</h2>
 
 <p id="text_out">processing... hit [F12] to view console.</p>
+<p id="progress_message"></p>
 
  <script type="text/javascript" async
   src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
@@ -16,14 +17,14 @@
 <script>
 
 let displayText = ""
-// nPlaces = 80;
-// groupSizes =[1,2,3,4,5,7,12]
-// nGroups = [60,21,4,3,2,1,1]
+nPlaces = 80;
+groupSizes =[1,2,3,4,5,7,12]
+nGroups = [60,21,4,3,2,1,1]
 // groupSizes =[1,2,3,4,5,7,12,20,50]
 // nGroups = [50,15,6,3,2,1,1,2,1]
-nPlaces = 6;
-groupSizes =[1,2,3]
-nGroups = [3,2,1]
+// nPlaces = 6;
+// groupSizes =[1,2,3]
+// nGroups = [3,2,1]
 nIterations =150
 //nIndividuals = 40;
 n40 = 1;
@@ -58,6 +59,7 @@ else
 {
 optimizer.selectAllCombinations()
 
+displayText += "number of combinations : "+ optimizer.selection.length+"<br> "
 displayText += "Some valid combinations are: <br> \n $$ ";
 
 for (let i=0; i<10 && i<optimizer.selection.length; i++)
@@ -69,8 +71,8 @@ for (let i=0; i<10 && i<optimizer.selection.length; i++)
 	displayText += optimizer.calculationTeX(i) 
 }
 displayText += " $$ <br>";
-displayText += "Everyone should have a chance of "+nPlaces+" / "+optimizer.nCandidates+" = "+optimizer.pAim +"<br>"
 displayText += "Now setting probabilities to combinations... <br>";
+displayText += "Everyone should have a chance of "+nPlaces+" / "+optimizer.nCandidates+" = "+optimizer.pAim +"<br>"
 
 document.getElementById("text_out").innerHTML = displayText;
 
@@ -79,19 +81,17 @@ console.log(comb["combinations"])
 console.log(comb["calculations"])
 
 optimizer.initialProbabilities()
-p = optimizer.improveProbabilities(nIterations)
+p = optimizer.improveProbabilities(nIterations, 1.001, htmlId = "progress_message")
 
-displayText += "iteration = "+nIterations +"<br>";
+displayText += "<br>results after "+nIterations +" iterations:";
+displayText += "<br>  "+optimizer.chancesTable(p,3,null)
 // displayText += "p = "+p +"<br>";
-displayText += "number of combinations : "+ p.length+"<br> "
 displayText += "individual chances :<br> "
 var pRelative = optimizer.pIndividuals(p,true)
 for (let i =0; i<pRelative.length; i++)
 {
-	displayText += i+": "+nGroups[i]+" groups of size "+groupSizes[i]+" deviate from the average by "+pRelative[i]+"<br>"
+	displayText += i+": "+nGroups[i]+" groups of size "+groupSizes[i]+" deviate from the average by "+pRelative[i].toFixed(8)+"<br>"
 }
-displayText += "<br> individual chance should be "+optimizer.pAim
-displayText += "<br>  "+optimizer.chancesTable(p,3,null)
 
 
 displayText +="<br>ready<br>";
