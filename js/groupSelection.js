@@ -4,6 +4,19 @@ groupSizes =[1,2,3,5]
 nGroups = [60,8,2,1] 60 individuals, 8 duos, 2 trios, 1 group of 5
 */
 
+function download(filename, text) {
+  var element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+  element.setAttribute('download', filename);
+
+  element.style.display = 'none';
+  document.body.appendChild(element);
+
+  element.click();
+
+  document.body.removeChild(element);
+}
+
 function shuffle(array) 
 {  let currentIndex = array.length;
 
@@ -384,6 +397,36 @@ groups.prototype.chancesTable = function(pVectors, nDigits = 3, pIndividuals = n
 		"</table>"
 	
 	return result 
+}
+groups.prototype.resultCsv = function(combins = this.selection, p=this.p, separator = "\t", newline = "\r\n")
+{
+	result = ""
+	// add headers
+	result += "combination index-->"
+	for (i = 0; i<p.length; i++)
+	{	result += separator + i
+	}	
+	// add probabilities
+	result += newline+"probability -->"
+	for (i = 0; i<p.length; i++)
+	{	result += separator + p[i]
+	}
+	// add separator
+	result += newline+"------ "
+	for (i = 0; i<p.length; i++)
+	{	result += separator + "'-----'"
+	}
+	// add group header   
+	result += newline+"groupsize " + separator + "selection -->"
+	// add combinations
+	for (j = 0; j<this.groupSizes.length; j++)
+	{   result += newline + this.groupSizes[j]
+	    for (i = 0; i<p.length; i++)
+	    {	result += separator + combins[i][j]
+	    }
+	}
+	// optional: add sums?
+	return result
 }
 
 groups.prototype.showCombinations = function(combins = this.selection, newLine = "<br>") // for console: "\r\n"

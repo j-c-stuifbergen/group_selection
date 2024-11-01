@@ -8,6 +8,7 @@
 
 <p id="text_out">processing... hit [F12] to view console.</p>
 <p id="progress_message"></p>
+<button id="csvDownload" onclick="download('groups.csv', optimizer.resultCsv())">Export results to csv file</button>
 
  <script type="text/javascript" async
   src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
@@ -17,16 +18,20 @@
 <script src="./js/groupSelection.js"></script>
 <!script src="./js/groupSelection_new.js"></script>
 <script>
+document.getElementById("csvDownload").style.display='none';
 
 let displayText = ""
 nPlaces = 80;
 groupSizes =[1,2,3,4,5,7,12]
 nGroups = [60,21,4,3,2,1,1]
+
 // groupSizes =[1,2,3,4,5,7,12,20,50]
 // nGroups = [50,15,6,3,2,1,1,2,1]
-// nPlaces = 6;
-// groupSizes =[1,2,3]
-// nGroups = [3,2,1]
+
+/*nPlaces = 6;
+groupSizes =[1,2,3]
+nGroups = [3,2,1]
+*/
 nIterations =150
 //nIndividuals = 40;
 n40 = 1;
@@ -102,11 +107,10 @@ for (let i =0; i<pRelative.length; i++)
 	displayText += i+": "+nGroups[i]+" groups of size "+groupSizes[i]+" deviate from the average by "+pRelative[i].toFixed(8)+"<br>"
 }
 
-
 displayText +="<br>ready<br>";
 
-
 document.getElementById("text_out").innerHTML = displayText;
+document.getElementById("csvDownload").style.display='block';
 }
 }
 </script>
