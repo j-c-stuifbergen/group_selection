@@ -21,10 +21,10 @@ function groups(nPlaces, groupSizes, nGroups)
 	this.nPlaces = nPlaces  // e.g. 80
 	this.groupSizes = groupSizes // e.g. [1, 2, 3, 5] : groups can be 1, 2, 3 persons
 	this.nGroups = nGroups  // e.g. [40, 8, 2, 1] for 40 individuals, 8 duos, 2 trios...
-	this.pAim = this.averageP()
 	this.combinations = [] // an array of combinations that fill all places
 	this.selection = []
 	this.p = [] // probabilities, belonging to the selection.
+	this.pAim = this.averageP() // also fills this.nCandidates
 }
 
 groups.prototype.makeDistribution = function()

@@ -5,6 +5,8 @@
 <h2>JavaScript Arrays</h2>
 
 <p id="text_out">processing... hit [F12] to view console.</p>
+<p id="progress_message"></p>
+
  <script type="text/javascript" async
   src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
 </script>
@@ -31,12 +33,33 @@ n50 = 1;
 // create possible combinations
 optimizer = new groups(nPlaces,groupSizes,nGroups)
 
-optimizer.setCombinations()
-optimizer.selectAllCombinations()
-console.log("combinations")
+if (optimizer.nCandidates <= nPlaces)
+{	displayText += "There is a place for all candidates! <br>\n"
+	if (optimizer.nCandidates < nPlaces)
+		{	displayText += "And there are " +
+				(nPlaces - optimizer.nCandidates) + 
+				"places left. <br>\n"
+		}
+}
+else
+{
+displayText += "There are " +optimizer.nCandidates+ " candidats "
+		+ "for only "+ nPlaces + " places. <br>\n"
+displayText += "I am checking possible combinations. <br>\n"
+	
+document.getElementById("text_out").innerHTML = displayText;
 
-displayText += "chance should be "+nPlaces+" / "+optimizer.nCandidates+" = "+optimizer.pAim +"<br>"
-displayText += " \n $$ ";
+console.log("trying combinations...")
+optimizer.setCombinations()
+if (0 == optimizer.combinations.length)
+{	displayText += "Not a single combination of these groups is possible! "
+	document.getElementById("text_out").innerHTML = displayText;
+}
+else
+{
+optimizer.selectAllCombinations()
+
+displayText += "Some valid combinations are: <br> \n $$ ";
 
 for (let i=0; i<10 && i<optimizer.selection.length; i++)
 {
@@ -46,9 +69,12 @@ for (let i=0; i<10 && i<optimizer.selection.length; i++)
 	// displayText += optimizer.calculationString(i) + "<br>"
 	displayText += optimizer.calculationTeX(i) 
 }
-displayText += " $$ ";
+displayText += " $$ <br>";
+displayText += "Everyone should have a chance of "+nPlaces+" / "+optimizer.nCandidates+" = "+optimizer.pAim +"<br>"
+displayText += "Now setting probabilities to combinations... <br>";
 
 document.getElementById("text_out").innerHTML = displayText;
+
 let comb = optimizer.showCombinations(optimizer.selection,"\r\n")
 console.log(comb["combinations"])
 console.log(comb["calculations"])
@@ -73,7 +99,8 @@ displayText +="<br>ready<br>";
 
 
 document.getElementById("text_out").innerHTML = displayText;
-
+}
+}
 </script>
 
 
