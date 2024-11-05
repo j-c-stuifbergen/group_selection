@@ -53,9 +53,23 @@ function groups(nPlaces, groupSizes, nGroups)
 	this.groupSizes = groupSizes // e.g. [1, 2, 3, 5] : groups can be 1, 2, 3 persons
 	this.nGroups = nGroups  // e.g. [40, 8, 2, 1] for 40 individuals, 8 duos, 2 trios...
 	this.combinations = [] // an array of combinations that fill all places
+	this.probabilities = [] // same dimensions as this.combinations. 
 	this.selection = [] // can contain indices that refer to this.combinations
-	this.p = [] // probabilities, belonging to the selection.
+	this.p = [] // weights, belonging to the selection.
 	this.pAim = this.averageP() // also fills this.nCandidates
+}
+
+groups.prototype.setProbabilities = function()
+// calculate the probabilities for groups in a combination
+{	this.probabilities = Array(this.combinations.length)
+	for (let i = 0 ; i < this.combinations.length; i++)
+	{	this.probabilities[i] = Array(this.groupSizes.length) 
+		for (let j = 0 ; j< this.groupSizes ; j++)
+		{
+			this.probabilities[i][j] = 
+			this.combinations[i][j] / this.nGroups[j]
+		}
+	}
 }
 
 groups.prototype.makeDistribution = function()
@@ -142,6 +156,7 @@ groups.prototype.penalty = function(combi)
 	{	// delta^2 * number of individuals.
 		result += Math.pow(this.pAim - combi[i]/this.nGroups[i], 2) * this.nGroups[i] * this.groupSizes[i] 
 	}
+	return result
 }
 groups.prototype.selectFirstCombination = function()
 {	this.selection = [0]
@@ -155,7 +170,21 @@ groups.prototype.selectFirstCombination = function()
 		}
 	}
 }
-groups.prototype.initialProbabilities = function()
+groups.prototype.selectBestCombinations = function()
+{	this.selection = [0]
+	penalty = this.penalty(this.combinations[0])
+
+	for(let i = 1; i<this.combinations.length ; i++)
+	{	newPenalty = this.penalty(this.combinations[i])
+		if (newPenalty < penalty)
+		{	penalty = newPenalty
+			// add the index at the beginning
+			this.selection.splice(0,0,i) 
+		}
+	}
+}
+
+groups.prototype.initialWeights = function()
 {	
 	this.p=[];
 	for (let i = 0; i< this.selection.length ; i++)
@@ -164,11 +193,11 @@ groups.prototype.initialProbabilities = function()
 	
 	return this.p
 }
-groups.prototype.improveProbabilities = function(nIterations, stepFactor = 1.001, htmlId = null)
+groups.prototype.improveWeights = function(nIterations, stepFactor = 1.001, htmlId = null)
 // at each iteration, adaptfactor will be multiplied by stepfactor
 {
 	if (null == this.p)
-	{	this.p = this.initialProbabilities()
+	{	this.p = this.initialWeights()
 	}
 	var maxWeight = 0;
 	for(i = 0; i<this.groupSizes.length; i++)
@@ -196,7 +225,7 @@ groups.prototype.improveProbabilities = function(nIterations, stepFactor = 1.001
 			}
 			pTotal+=this.p[i]
 		}
-		message += "coeff : "+this.p
+		// message += "coeff : "+this.p
 		console.log(message)
 		if (null != htmlId)
 		{	document.getElementById(htmlId).innerHTML = message
@@ -211,11 +240,11 @@ groups.prototype.improveProbabilities = function(nIterations, stepFactor = 1.001
 	return this.p
 }
 
-groups.prototype.improveProbabilitiesOud = function(nIterations, stepFactor = 1.001)
+groups.prototype.improveWeightsOud = function(nIterations, stepFactor = 1.001)
 // at each iteration, adaptfactor will be multiplied by stepfactor
 {
 	if (null == this.p)
-	{	this.p = this.initialProbabilities()
+	{	this.p = this.initialWeights()
 	}
 	var maxWeight = 0;
 	for(i = 0; i<this.groupSizes.length; i++)
@@ -344,6 +373,10 @@ groups.prototype.calculationString = function(i, selec = this.selection)
 	return result 
 }
 
+groups.prototype.selectedToTex = function (index)
+{
+	return vector_to_TeX (this.combinations[this.selection[index]])
+}
 groups.prototype.calculationTeX = function(i, selec = this.selection)
 {	
 	if (selec.length <= i)
@@ -409,7 +442,7 @@ groups.prototype.resultCsv = function(selec = this.selection, p=this.p, separato
 	for (i = 0; i<p.length; i++)
 	{	result += separator + i
 	}	
-	// add probabilities
+	// add Weights
 	result += newline+"probability -->"
 	for (i = 0; i<p.length; i++)
 	{	result += separator + p[i]
