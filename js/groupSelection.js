@@ -53,7 +53,7 @@ function groups(nPlaces, groupSizes, nGroups)
 	this.groupSizes = groupSizes // e.g. [1, 2, 3, 5] : groups can be 1, 2, 3 persons
 	this.nGroups = nGroups  // e.g. [40, 8, 2, 1] for 40 individuals, 8 duos, 2 trios...
 	this.combinations = [] // an array of combinations that fill all places
-	this.selection = []
+	this.selection = [] // can contain indices that refer to this.combinations
 	this.p = [] // probabilities, belonging to the selection.
 	this.pAim = this.averageP() // also fills this.nCandidates
 }
@@ -127,7 +127,7 @@ groups.prototype.derivative = function()
 		for (let j = 0; j<this.groupSizes.length; j++)
 		{
 		  // give extra weight if a deviation affects more persons
-		  q[i]+=(this.pAim - a[j])*this.selection[i][j]*this.groupSizes[j];
+		  q[i]+=(this.pAim - a[j])*this.combinations[this.selection[i]][j]*this.groupSizes[j];
 		  // don't make chances negative
 		  if (q[i] < 0 && 0 ===this.p[i])
 		  {	q[i] = 0
@@ -144,14 +144,14 @@ groups.prototype.penalty = function(combi)
 	}
 }
 groups.prototype.selectFirstCombination = function()
-{	this.selection = [this.combinations[0]]
-	penalty = this.penalty(this.selection[0])
+{	this.selection = [0]
+	penalty = this.penalty(this.combinations[0])
 
 	for(let i = 1; i<this.combinations.length ; i++)
 	{	newPenalty = this.penalty(this.combinations[i])
 		if (newPenalty < penalty)
 		{	penalty = newPenalty
-			this.selection[0] = this.combinations[i]
+			this.selection[0] = i
 		}
 	}
 }
@@ -168,7 +168,7 @@ groups.prototype.improveProbabilities = function(nIterations, stepFactor = 1.001
 // at each iteration, adaptfactor will be multiplied by stepfactor
 {
 	if (null == this.p)
-	{	this.p = this.initialProbabilities(this.selection)
+	{	this.p = this.initialProbabilities()
 	}
 	var maxWeight = 0;
 	for(i = 0; i<this.groupSizes.length; i++)
@@ -215,7 +215,7 @@ groups.prototype.improveProbabilitiesOud = function(nIterations, stepFactor = 1.
 // at each iteration, adaptfactor will be multiplied by stepfactor
 {
 	if (null == this.p)
-	{	this.p = this.initialProbabilities(this.selection)
+	{	this.p = this.initialProbabilities()
 	}
 	var maxWeight = 0;
 	for(i = 0; i<this.groupSizes.length; i++)
@@ -267,11 +267,11 @@ groups.prototype.pIndividuals = function(p,relative = false)
 {	// p contains the probability of vectors in de selection
 	var e = [];// expected number of groups that will have a place
 	var a = []; // a[j]=e[j]/nGroups[j]; probability that a member of these groups will have a place
-	for (let j = 0; j<this.selection[0].length; j++)
+	for (let j = 0; j<this.groupSizes.length; j++)
 	{
 		e[j] = 0; // expected number of groups of groupSize[j]
 		for (let i = 0; i< this.selection.length ; i++)
-		{	e[j] += p[i]*this.selection[i][j];
+		{	e[j] += p[i]*this.combinations[this.selection[i]][j];
 		}
 		a[j]=e[j]/this.nGroups[j];
 		if (relative ==true)
@@ -281,8 +281,9 @@ groups.prototype.pIndividuals = function(p,relative = false)
 	return a
 }
 groups.prototype.selectAllCombinations = function()
-{	this.selection = this.combinations
+{	this.selection = Array.from(Array(this.combinations.length).keys())
 }
+
 groups.prototype.setCombinations = function()
 {
 	function recursivePart(nPlaces,nGroupsIn)
@@ -323,38 +324,40 @@ groups.prototype.setCombinations = function()
 
 	this.combinations = recursivePart(this.nPlaces,this.nGroups)
 }
-groups.prototype.calculationString = function(i, combins = this.selection)
+groups.prototype.calculationString = function(i, selec = this.selection)
 {	
-	if (combins.length <= i)
-	{	return "There are not more than " + combins.length +" selected combinations."
+	if (selec.length <= i)
+	{	return "There are not more than " + selec.length +" selected combinations."
 			+ i + " is too big."
 	}
+	combi = this.combinations[selec[i]]
 	var result = ""
 	let total = 0
 	let j = 0
 	for (; j<this.groupSizes.length-1; j++)
-	{	total +=  combins[i][j] * this.groupSizes[j]
-		result += combins[i][j]+"x"+this.groupSizes[j]+" + "
+	{	total +=  combi[j] * this.groupSizes[j]
+		result += combi[j]+"x"+this.groupSizes[j]+" + "
 	}
-	total +=  combins[i][j] * this.groupSizes[j]
-	result += combins[i][j]+"x"+this.groupSizes[j]+" = " + total
+	total +=  combi[j] * this.groupSizes[j]
+	result += combi[j]+"x"+this.groupSizes[j]+" = " + total
 	
 	return result 
 }
 
-groups.prototype.calculationTeX = function(i, combins = this.selection)
+groups.prototype.calculationTeX = function(i, selec = this.selection)
 {	
-	if (combins.length <= i)
-	{	return "There are not more than " + combins.length +" selected combinations."
+	if (selec.length <= i)
+	{	return "There are not more than " + selec.length +" selected combinations."
 			+ i + " is too big."
 	}
+	combi = this.combinations[selec[i]]
 	var result = "\\begin{pmatrix}"
 	let total = 0
 	for (j=0; j<this.groupSizes.length; j++)
-	{	total +=  combins[i][j] * this.groupSizes[j]
+	{	total +=  combi[j] * this.groupSizes[j]
 		result += 0<j? "\\\\ " : ""
-		result +=  "\\text{"+combins[i][j]+"x"+this.groupSizes[j] + "} &=& "
-				+ combins[i][j] * this.groupSizes[j]
+		result +=  "\\text{"+combi[j]+"x"+this.groupSizes[j] + "} &=& "
+				+ combi[j] * this.groupSizes[j]
 	}
 	result += "\\\\ \\text{total} &=& " + total +"\\end{pmatrix} "
 	
@@ -398,7 +401,7 @@ groups.prototype.chancesTable = function(pVectors, nDigits = 3, pIndividuals = n
 	
 	return result 
 }
-groups.prototype.resultCsv = function(combins = this.selection, p=this.p, separator = "\t", newline = "\r\n")
+groups.prototype.resultCsv = function(selec = this.selection, p=this.p, separator = "\t", newline = "\r\n")
 {
 	result = ""
 	// add headers
@@ -422,20 +425,20 @@ groups.prototype.resultCsv = function(combins = this.selection, p=this.p, separa
 	for (j = 0; j<this.groupSizes.length; j++)
 	{   result += newline + this.groupSizes[j]
 	    for (i = 0; i<p.length; i++)
-	    {	result += separator + combins[i][j]
+	    {	result += separator + this.combinations[selec[i]][j]
 	    }
 	}
 	// optional: add sums?
 	return result
 }
 
-groups.prototype.showCombinations = function(combins = this.selection, newLine = "<br>") // for console: "\r\n"
+groups.prototype.selectionString = function(selec = this.selection, newLine = "<br>") // for console: "\r\n"
 {
 	let combinationString = ""
 	let calcStr = ""
-	for (let i = 0; i<combins.length; i++)
-	{	combinationString += "["+combins[i]+"]"+newLine
-		calcStr+= this.calculationString(i, combins)+newLine
+	for (let i = 0; i<selec.length; i++)
+	{	combinationString += "["+this.combinations[selec[i]]+"]"+newLine
+		calcStr+= this.calculationString(i, selec)+newLine
  	}
 	return {"combinations":combinationString, "calculations": calcStr}
 }

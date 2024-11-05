@@ -90,7 +90,7 @@ displayText += "Everyone should have a chance of "+nPlaces+" / "+optimizer.nCand
 
 document.getElementById("text_out").innerHTML = displayText;
 
-let comb = optimizer.showCombinations(optimizer.selection,"\r\n")
+let comb = optimizer.selectionString(optimizer.selection,"\r\n")
 console.log(comb["combinations"])
 console.log(comb["calculations"])
 
