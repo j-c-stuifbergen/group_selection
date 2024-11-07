@@ -373,6 +373,10 @@ groups.prototype.calculationString = function(i, selec = this.selection)
 	return result 
 }
 
+groups.prototype.calculationGroupsString = function()
+{	
+	return this.calculationVectorToTeX ( this.nGroups)
+}
 groups.prototype.selectedToTex = function (index)
 {
 	return vector_to_TeX (this.combinations[this.selection[index]])
@@ -383,7 +387,11 @@ groups.prototype.calculationTeX = function(i, selec = this.selection)
 	{	return "There are not more than " + selec.length +" selected combinations."
 			+ i + " is too big."
 	}
-	combi = this.combinations[selec[i]]
+	return this.calculationVectorToTeX ( this.combinations[selec[i]])
+}
+
+groups.prototype.calculationVectorToTeX = function(combi)
+{	
 	var result = "\\begin{pmatrix}"
 	let total = 0
 	for (j=0; j<this.groupSizes.length; j++)

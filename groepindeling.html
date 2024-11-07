@@ -41,6 +41,9 @@ n50 = 1;
 // create possible combinations
 optimizer = new groups(nPlaces,groupSizes,nGroups)
 
+displayText += "The group distribution is: <br> \n $$" 
+                + optimizer.calculationGroupsString() + "$$ <br>\n"
+
 if (optimizer.nCandidates <= nPlaces)
 {	displayText += "There is a place for all candidates! <br>\n"
 	if (optimizer.nCandidates < nPlaces)
@@ -53,6 +56,7 @@ else
 {
 displayText += "There are " +optimizer.nCandidates+ " candidats "
 		+ "for only "+ nPlaces + " places. <br>\n"
+
 progressText = "I am checking possible combinations. <br>\n"
 	
 document.getElementById("text_out").innerHTML = displayText;
