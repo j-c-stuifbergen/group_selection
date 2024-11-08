@@ -1,8 +1,5 @@
-/* e.g. 
-nPlaces = 60;
-groupSizes =[1,2,3,5]
-nGroups = [60,8,2,1] 60 individuals, 8 duos, 2 trios, 1 group of 5
-*/
+// requires
+// <script src="./js/matrix.js"></script>
 
 function download(filename, text) {
   var element = document.createElement('a');
@@ -52,11 +49,14 @@ function groups(nPlaces, groupSizes, nGroups)
 	this.nPlaces = nPlaces  // e.g. 80
 	this.groupSizes = groupSizes // e.g. [1, 2, 3, 5] : groups can be 1, 2, 3 persons
 	this.nGroups = nGroups  // e.g. [40, 8, 2, 1] for 40 individuals, 8 duos, 2 trios...
+	this.nIndividuals = [] // groupSizes * nGroups
+	this.nCandidates = 0
 	this.combinations = [] // an array of combinations that fill all places
 	this.probabilities = [] // same dimensions as this.combinations. 
 	this.selection = [] // can contain indices that refer to this.combinations
 	this.p = [] // weights, belonging to the selection.
-	this.pAim = this.averageP() // also fills this.nCandidates
+	this.setIndividuals() // also fills this.nCandidates
+	this.pAim = this.nPlaces/this.nCandidates; // also fills this.nCandidates
 }
 
 groups.prototype.setProbabilities = function()
@@ -64,7 +64,7 @@ groups.prototype.setProbabilities = function()
 {	this.probabilities = Array(this.combinations.length)
 	for (let i = 0 ; i < this.combinations.length; i++)
 	{	this.probabilities[i] = Array(this.groupSizes.length) 
-		for (let j = 0 ; j< this.groupSizes ; j++)
+		for (let j = 0 ; j< this.groupSizes.length ; j++)
 		{
 			this.probabilities[i][j] = 
 			this.combinations[i][j] / this.nGroups[j]
@@ -87,12 +87,15 @@ groups.prototype.makeDistribution = function()
 	}
 }
 
-groups.prototype.individuals = function(groupSizes, nGroups)
-{	result = new Array(groupSizes.length)
-	for (let i=0; i<result.length ; i++)
-	{	result[i] = groupSizes[i] * nGroups[i]
+groups.prototype.setIndividuals = function()
+{	this.nIndividuals = new Array(this.groupSizes.length)
+
+	this.nCandidates = 0
+	for (let i=0; i<this.groupSizes.length ; i++)
+	{	this.nIndividuals[i] = this.groupSizes[i] * this.nGroups[i]
+		this.nCandidates += this.nIndividuals[i]
 	}
-	return result
+	return this.nIndividuals
 }
 
 groups.prototype.parabolaMin = function(fie, x=1.0)
@@ -117,14 +120,6 @@ groups.prototype.diff2 = function(v1, v2)
 {	result = 0
 	for( let i = 0; i<this.groupSizes.length; i++)
 	{	result += Math.pow(v1[i]-v2[i], 2) * groupSizes[i]
-	}
-	return result
-}
-
-Array.prototype.timesScalar = function(scalar)
-{	result = new Array(this.length)
-	for(let i = 0; i<this.length ; i++)
-	{	result[i] = this[i]*scalar
 	}
 	return result
 }
@@ -154,34 +149,110 @@ groups.prototype.penalty = function(combi)
 {	var result = 0
 	for(let i = 0 ; i < this.groupSizes.length ; i++)
 	{	// delta^2 * number of individuals.
-		result += Math.pow(this.pAim - combi[i]/this.nGroups[i], 2) * this.nGroups[i] * this.groupSizes[i] 
+		result += Math.pow(this.pAim - combi[i], 2) * this.nGroups[i] * this.groupSizes[i] 
 	}
 	return result
 }
+groups.prototype.innerProd = function(prob1, prob2)
+// inner product , weighted by Groupsizes*nGroups
+{	
+/*	console.log("nindividuals is "+ this.nIndividuals)
+	console.log("prob1 is "+ prob1)
+	console.log("prob2 is "+ prob2)
+	console.log("nindividuals is "+ this.nIndividuals.length)
+	console.log("prob1 is "+ prob1.length)
+	console.log("prob2 is "+ prob2.length)
+*/	innerProductForDiagonalIP(prob1, prob2, this.nIndividuals)
+}
+
 groups.prototype.selectFirstCombination = function()
 {	this.selection = [0]
-	penalty = this.penalty(this.combinations[0])
+	penalty = this.penalty(this.probabilities[0])
 
 	for(let i = 1; i<this.combinations.length ; i++)
-	{	newPenalty = this.penalty(this.combinations[i])
+	{	newPenalty = this.penalty(this.probabilities[i])
 		if (newPenalty < penalty)
 		{	penalty = newPenalty
 			this.selection[0] = i
+			// add the index at the beginning, leave old results
+			// this.selection.splice(0,0,i) 
 		}
 	}
 }
-groups.prototype.selectBestCombinations = function()
+
+groups.prototype.selectBestCombinationsOld = function()
 {	this.selection = [0]
-	penalty = this.penalty(this.combinations[0])
+	penalty = this.penalty(this.probabilities[0])
 
 	for(let i = 1; i<this.combinations.length ; i++)
-	{	newPenalty = this.penalty(this.combinations[i])
+	{	newPenalty = this.penalty(this.probabilities[i])
 		if (newPenalty < penalty)
 		{	penalty = newPenalty
-			// add the index at the beginning
+			// this.selection[0] = i
+			// add the index at the beginning, leave old results
 			this.selection.splice(0,0,i) 
 		}
 	}
+}
+
+groups.prototype.selectBestCombinations = function(epsilon = 1e-6)
+{	// const epsilon = 1e-6
+	this.selectFirstCombination()
+	this.p=[1];	
+	console.log(this.selection + " is selectie")
+	pVector = this.probabilities[this.selection[0]]
+	pVector = this.probabilities[0]
+	aimVector = new Array(this.groupSizes.length).fill(this.pAim)
+
+	while (this.p.length < this.groupSizes.length)
+	{	 
+		pVerschil = aimVector.subtract(pVector)
+		console.log("pVector =" + pVector)
+		console.log("aimvector =" + aimVector +" pverschil is" +pVerschil)
+		penalty = this.innerProd(pVerschil, pVerschil)
+		// penalty = this.penalty(pVector)
+		if ( penalty < epsilon)
+		{ 	break
+		}
+
+		this.selection.push( this.selectByIP(pVerschil) )
+		
+		this.p = leastSquaresForDiagonalIP(
+			this.probabilityMatrix(), aimVector, this.nCandidates )
+
+		pVector.fill(0)
+		for (i=0; i<this.p.length ; i++)	
+		{	pVector.add(
+			this.probabilities[this.selection[i]].timesScalar(this.p[i]))
+		}
+	}
+	return pVector
+}
+
+groups.prototype.selectByIP = function(aimVector)
+{		 
+	bestIndex = 0; bestIP = 0
+	for (i = 0 ; i<this.combinations.length ; i++)
+	{	ip = this.innerProd(pVerschil, this.probabilities[i])
+		if (bestIP < ip)
+		{	bestIP = ip
+			bestIndex = i
+		}
+	}
+	return i
+}
+
+groups.prototype.solveLeastSquares = function(aimVector)
+{
+	this.p = leastSquaresForDiagonalIP(
+		this.probabilityMatrix(), aimVector, this.nCandidates )
+
+	pVector.fill(0)
+	for (i=0; i<this.p.length ; i++)	
+	{	pVector.add(
+		this.probabilities[this.selection[i]].timesScalar(this.p[i]))
+	}
+	return this.p
 }
 
 groups.prototype.initialWeights = function()
@@ -283,15 +354,13 @@ groups.prototype.improveWeightsOud = function(nIterations, stepFactor = 1.001)
 	return this.p
 }
 
-groups.prototype.averageP= function()
-{
-	// expected probability
-	this.nCandidates = 0
-	for (let i= 0; i<this.groupSizes.length; i++)
-	{	this.nCandidates += this.groupSizes[i]*this.nGroups[i]
-	}
-	return this.nPlaces/this.nCandidates;
+groups.prototype.probabilityMatrix= function()
+{	result = Array(this.selection.length)
+	for (i = 0; i< result.length; i++)
+	result [i] = this.probabilities[this.selection[i]]
+	return result
 }
+
 groups.prototype.pIndividuals = function(p,relative = false)
 {	// p contains the probability of vectors in de selection
 	var e = [];// expected number of groups that will have a place

@@ -15,6 +15,7 @@
 </script>
 
 <script src="./js/Math_display.js"></script>
+<script src="./js/matrix.js"></script>
 <script src="./js/groupSelection.js"></script>
 <!script src="./js/groupSelection_new.js"></script>
 <script>
@@ -57,9 +58,9 @@ else
 displayText += "There are " +optimizer.nCandidates+ " candidats "
 		+ "for only "+ nPlaces + " places. <br>\n"
 
-progressText = "I am checking possible combinations. <br>\n"
-	
 document.getElementById("text_out").innerHTML = displayText;
+
+progressText = "I am checking possible combinations. <br>\n"
 document.getElementById("progress_message").innerHTML = progressText;
 
 console.log("trying combinations...")
@@ -90,10 +91,14 @@ for (let i=0; i<10 && i<randomArr.length; i++)
 	displayText += optimizer.calculationTeX(randomArr[i]) 
 }
 displayText += " $$ <br>";
+document.getElementById("text_out").innerHTML = displayText;
 
 optimizer.selectFirstCombination()
-optimizer.selectBestCombinations()
-// optimizer.selection = randomArr.slice(0,500)
+progressText += "First combination OK. <br>\n"
+document.getElementById("progress_message").innerHTML = progressText;
+
+optimizer.selectBestCombinationsOld()
+// optimizer.selectBestCombinations()
 optimizer.selection = optimizer.selection.slice(0,nSelected)
 displayText += " the selected combinations are <br> \n $$";
 var i = 0;
