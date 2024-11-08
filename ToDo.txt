@@ -1,0 +1,12 @@
+Things left to do....
+=====================
+
+- interface: web-form for input of groups
+(text field, + and - buttons)
+
+- display the probabilities! (+ calculation?)
+
+- possibility to select combinations by hand?
+
+- improve lay-out: integrate deviations in the table
+

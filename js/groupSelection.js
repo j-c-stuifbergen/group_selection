@@ -561,20 +561,22 @@ groups.prototype.resultCsv = function(selec = this.selection, p=this.p, separato
 {
 	result = ""
 	// add headers
-	result += separator + separator + "combination index-->"
+	result += this.nPlaces + separator + "'= total places "
+		+ separator + "combination index-->"
 	for (let i = 0; i<p.length; i++)
 	{	result += separator + i
 	}	
 	// add Weights
-	result += newline + separator + separator + "probability of combi-->"
+	result += newline + this.nCandidates + separator + "'=total persons " 
+			+ separator + "probability of combi-->"
 	for (let i = 0; i<p.length; i++)
 	{	result += separator + p[i]
 	}
 	// add separator
 	result += newline+ "------ " + separator + "------ " 
-		+ separator + "------ " + separator
+		+ separator + "------ "
 	for (let i = 0; i<p.length; i++)
-	{	result += separator + "'-----'"
+	{	result += separator + "-----"
 	}
 	// add group header   
 	result += newline+"N_persons " + separator + "N_groups" +
