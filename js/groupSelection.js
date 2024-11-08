@@ -228,29 +228,24 @@ groups.prototype.selectNSimilarCombinations = function(N = 6)
 }
 
 groups.prototype.selectBestCombinations = function(epsilon = 1e-6)
-{	// const epsilon = 1e-6
+{	console.log("=== find the best combinations by least squares ===")
 	this.selectFirstCombination()
-	this.p=[1];	
-	console.log(this.selection + " is selectie")
-	pVector = this.probabilities[this.selection[0]]
-	pVector = this.probabilities[0]
+// 	this.p=[1];	
 	aimVector = new Array(this.groupSizes.length).fill(this.pAim)
+	console.log("aimVector " +aimVector)
 
 	this.p = leastSquaresForDiagonalIP(
 			this.probabilityMatrix(), aimVector, this.nIndividuals )
 	pVector = this.pIndividuals(this.p)
-		console.log("aimVector " +aimVector)
-		console.log("nIndividuals " +this.nIndividuals)
-		console.log("debug eerste p " +this.p)
 
 	while (this.p.length < this.groupSizes.length)
 	{	 
 
 		pVerschil = aimVector.subtract(pVector)
-		console.log("pVerschil =" + pVerschil)
 		penalty = this.innerProd(pVerschil, pVerschil)
 		// penalty = this.penalty(pVector)
-		console.log("penalty =" + penalty)
+		console.log("weights for the combinations are " + this.p)
+		console.log("penalty =" + penalty + " ----- pVerschil =" + pVerschil)
 		if ( penalty < epsilon)
 		{ 	break
 		}
@@ -259,19 +254,12 @@ groups.prototype.selectBestCombinations = function(epsilon = 1e-6)
 
 		this.p = leastSquaresForDiagonalIP(
 			this.probabilityMatrix(), aimVector, this.nIndividuals )
-	console.log('--------------------------------------------')
-
-		console.log("debug of p " +this.p)
 
 		pVector.fill(0)
 		for (let i=0; i<this.p.length ; i++)	
 		{	pVector = pVector.add(
 			this.probabilities[this.selection[i]].timesScalar(this.p[i]))
-	console.log("i = "+i +" proba is "+		this.probabilities[this.selection[i]].timesScalar(this.p[i]))
-	console.log("i = "+i +" pVector is "+		pVector)
-	console.log("coefficients are "+ this.p)
 		}
-	console.log('====================================================')
 	}
 	return pVector
 }
@@ -287,7 +275,6 @@ groups.prototype.selectByIP = function(goalVector)
 			bestIndex = i
 		}
 	}
-	console.log("selected index by IP: "+bestIndex)
 	return bestIndex
 }
 

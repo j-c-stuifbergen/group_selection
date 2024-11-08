@@ -75,7 +75,6 @@ function solveMatrixEquation(A, B) {
 
 function transpose(M)
 {	// number of columns of the transpose
-		console.log("M is "+M)
 	nCols = M.length // = number of rows of M
 	if (0 == nCols)
 	{	return []
@@ -84,7 +83,6 @@ function transpose(M)
 	nRows = M[0].length // = number of columns of M
 	for (col = 0; col < nCols; col++)
 	    {
-		    console.log( "nRows is "+nRows+ ", nCols is "+nCols+", col is "+ col)
 		if (M[col].length != nRows )
 		    {   throw ("inconsistent row length at row "+ row + "of M")
 			return 
@@ -153,7 +151,6 @@ function diagonalMatrixProduct(diagonal, M2)
 {
 	result = []
 	nRows = diagonal.length
-	console.log("nRows is "+nRows)
 	if (0 == nRows)
 	{	return []
 	}
@@ -166,7 +163,6 @@ function diagonalMatrixProduct(diagonal, M2)
 	if (0 == nCols)
 	{	return new Array(nRows).fill(0).map(() => new Array(nCols))
 	}
-	console.log("ncols is "+nCols)
 	for (i = 1; i<M2.length; i ++)
 	{
 	    if (M2[i].length != nCols)	
@@ -185,9 +181,6 @@ function diagonalMatrixProduct(diagonal, M2)
 		}
 	    }
  	}
-	console.log("diagonal : "+diagonal)
-	console.log("   x matrix: "+M2)
-	console.log("diagonal x matrix: "+result)
 	return result
 }
 
@@ -236,9 +229,6 @@ function leastSquaresForUnitIP(A, B, metricA = null) {
   const m = A.length;  // Number of rows
   const n = A[0].length;  // Number of columns
 
-  console.log("a " + A)
-  console.log("B " + B)
-  console.log("at " + metricA)
   if (null == metricA)
   {	metricA = A
   }
@@ -262,12 +252,11 @@ function leastSquaresForUnitIP(A, B, metricA = null) {
       ATB[i] += metricA[k][i] * B[k];
     }
   }
-  console.log("ata " + ATA)
-  console.log("atB " + ATB)
+
   // Step 3: Solve the normal equation (A^T * A) * X = A^T * B
   return solveMatrixEquation(ATA, ATB);
 }
-
+/*
 // Example usage
 const A = [
   [2, 1],
@@ -280,4 +269,4 @@ const B = [5, 6, 7, 8];
 
 const leastSquaresSolution = leastSquaresForUnitIP(A, B);
 console.log("Least Squares Solution:", leastSquaresSolution);
-
+*/
