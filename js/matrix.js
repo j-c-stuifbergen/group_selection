@@ -74,23 +74,33 @@ function solveMatrixEquation(A, B) {
 }
 
 function transpose(M)
-{
-	nRows = M.length
-	if (0 == nRows)
+{	// number of columns of the transpose
+		console.log("M is "+M)
+	nCols = M.length // = number of rows of M
+	if (0 == nCols)
 	{	return []
 	}
 	// else
-	nCols = M[0].length
-	result = Array(nCols,nRows)
+	nRows = M[0].length // = number of columns of M
+	for (col = 0; col < nCols; col++)
+	    {
+		    console.log( "nRows is "+nRows+ ", nCols is "+nCols+", col is "+ col)
+		if (M[col].length != nRows )
+		    {   throw ("inconsistent row length at row "+ row + "of M")
+			return 
+		    }
+	}
+	result = Array(nRows)
 	for (row = 0; row < nRows ; row ++)
 	{
-	    if (M[row].length != nCols )
-	    {   throw ("inconsistent row length at row "+ row + "of M")
-		return 
-	    }
+	    result[row]=Array(nCols)
 	    for (col = 0; col < nCols; col++)
 	    {
-		result[col][row] = M[row][col]
+		    if (M[col].length != nRows )
+		    {   throw ("inconsistent row length at row "+ row + "of M")
+			return 
+		    }
+		result[row][col] = M[col][row]
 	    }
 	}
 	return result
@@ -124,15 +134,15 @@ function matrixProduct(M1, M2)
 		return 
 	    }
 	}
-	result = Array(nRows, nCols)
-	
+
+	result = Array(nRows)
 	for (row = 0; row < nRows ; row ++)
 	{
+	    result[row]=Array(nCols).fill(0)
 	    for (col = 0; col < nCols; col ++)
 	    {   
-		result[row, col] = 0;
 		for (let i = 0 ; i < len ; i++)
-		{	result[row, col] += M1 [row, i] * M2 [i,col]
+		{	result[row][col] += M1 [row][ i] * M2 [i][col]
 		}
 	    }
  	}
@@ -142,32 +152,42 @@ function matrixProduct(M1, M2)
 function diagonalMatrixProduct(diagonal, M2)
 {
 	result = []
-	len = diagonal.length
-	if (0 == len)
+	nRows = diagonal.length
+	console.log("nRows is "+nRows)
+	if (0 == nRows)
 	{	return []
 	}
 	// else
-	if (M2.length != len)
-	{	throw ("incompatible matrix sizes")
-		return [] // error
+	if (M2.length != nRows)	
+	    {   throw ("inconsistent row length at row "+ i + "of M2")
+		return 
+	    }
+	nCols = M2[0].length
+	if (0 == nCols)
+	{	return new Array(nRows).fill(0).map(() => new Array(nCols))
 	}
-	// else
-	for (i = 0; i<len; i ++)
-	{	if (M2[i].length != len)	
+	console.log("ncols is "+nCols)
+	for (i = 1; i<M2.length; i ++)
+	{
+	    if (M2[i].length != nCols)	
 	    {   throw ("inconsistent row length at row "+ i + "of M2")
 		return 
 	    }
 	}
-	result = Array(len, len)
 	
-	for (row = 0; row < len ; row ++)
+	result = Array(nCols)
+	for (row = 0; row < nRows ; row ++)
 	{
-	    for (col = 0; col < len; col ++)
+	    result[row]=Array(nCols).fill(0)
+	    for (col = 0; col < nCols; col ++)
 	    {   
-		{	result[row, col] += M1 [row] * M2 [row,col]
+		{	result[row][col] = diagonal [row] * M2 [row][col]
 		}
 	    }
  	}
+	console.log("diagonal : "+diagonal)
+	console.log("   x matrix: "+M2)
+	console.log("diagonal x matrix: "+result)
 	return result
 }
 
@@ -210,12 +230,15 @@ function leastSquaresForDiagonalIP(matrix, vector, diagonalElements) {
 }
 
 // Function to compute the least-squares solution to an overdetermined system.
-// The standard inner product will be used if metricA == null.
+// If metricA == null, ATA is calculated as transpose(A) * A
 // Otherwise, ATA will be calculated as transpose(metricA) * A
 function leastSquaresForUnitIP(A, B, metricA = null) {
   const m = A.length;  // Number of rows
   const n = A[0].length;  // Number of columns
 
+  console.log("a " + A)
+  console.log("B " + B)
+  console.log("at " + metricA)
   if (null == metricA)
   {	metricA = A
   }
@@ -227,7 +250,7 @@ function leastSquaresForUnitIP(A, B, metricA = null) {
   for (let i = 0; i < n; i++) {
     for (let j = 0; j < n; j++) {
       for (let k = 0; k < m; k++) {
-        ATA[i][j] += metricA[k][i] * metricA[k][j];
+        ATA[i][j] += metricA[k][i] * A[k][j];
       }
     }
   }
@@ -239,7 +262,8 @@ function leastSquaresForUnitIP(A, B, metricA = null) {
       ATB[i] += metricA[k][i] * B[k];
     }
   }
-
+  console.log("ata " + ATA)
+  console.log("atB " + ATB)
   // Step 3: Solve the normal equation (A^T * A) * X = A^T * B
   return solveMatrixEquation(ATA, ATB);
 }

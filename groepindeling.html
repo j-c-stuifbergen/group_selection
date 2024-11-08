@@ -97,9 +97,11 @@ optimizer.selectFirstCombination()
 progressText += "First combination OK. <br>\n"
 document.getElementById("progress_message").innerHTML = progressText;
 
-optimizer.selectBestCombinationsOld()
-// optimizer.selectBestCombinations()
-optimizer.selection = optimizer.selection.slice(0,nSelected)
+// optimizer.selectBestCombinationsOld()
+// optimizer.selectNSimilarCombinations()
+
+optimizer.selectBestCombinations()
+// optimizer.selection = optimizer.selection.slice(0,nSelected)
 displayText += " the selected combinations are <br> \n $$";
 var i = 0;
 for (i=0; i<25 && i<optimizer.selection.length; i++)
@@ -120,14 +122,15 @@ let comb = optimizer.selectionString(optimizer.selection,"\r\n")
 console.log(comb["combinations"])
 console.log(comb["calculations"])
 
-optimizer.initialWeights()
-p = optimizer.improveWeights(nIterations, 1.001, htmlId = "progress_message")
+/* optimizer.initialWeights()
+ p = optimizer.improveWeights(nIterations, 1.001, htmlId = "progress_message")
 
 displayText += "<br>results after "+nIterations +" iterations:";
-displayText += "<br>  "+optimizer.chancesTable(p,3,null)
+*/
+displayText += "<br>  "+optimizer.chancesTable(optimizer.p,3,null)
 // displayText += "p = "+p +"<br>";
 displayText += "individual chances :<br> "
-var pRelative = optimizer.pIndividuals(p,true)
+var pRelative = optimizer.pIndividuals(optimizer.p,true)
 for (let i =0; i<pRelative.length; i++)
 {
 	displayText += i+": "+nGroups[i]+" groups of size "+groupSizes[i]+" deviate from the average by "+pRelative[i].toFixed(8)+"<br>"
