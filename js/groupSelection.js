@@ -233,25 +233,10 @@ groups.prototype.selectBestCombinations = function(epsilon = 1e-6)
 // 	this.p=[1];	
 	aimVector = new Array(this.groupSizes.length).fill(this.pAim)
 	console.log("aimVector " +aimVector)
+	pVector = Array(this.groupSizes.length)
 
-	this.p = leastSquaresForDiagonalIP(
-			this.probabilityMatrix(), aimVector, this.nIndividuals )
-	pVector = this.pIndividuals(this.p)
-
-	while (this.p.length < this.groupSizes.length)
+	while (true)
 	{	 
-
-		pVerschil = aimVector.subtract(pVector)
-		penalty = this.innerProd(pVerschil, pVerschil)
-		// penalty = this.penalty(pVector)
-		console.log("weights for the combinations are " + this.p)
-		console.log("penalty =" + penalty + " ----- pVerschil =" + pVerschil)
-		if ( penalty < epsilon)
-		{ 	break
-		}
-
-		this.selection.push( this.selectByIP(pVerschil) )
-
 		this.p = leastSquaresForDiagonalIP(
 			this.probabilityMatrix(), aimVector, this.nIndividuals )
 
@@ -260,6 +245,20 @@ groups.prototype.selectBestCombinations = function(epsilon = 1e-6)
 		{	pVector = pVector.add(
 			this.probabilities[this.selection[i]].timesScalar(this.p[i]))
 		}
+
+		pVerschil = aimVector.subtract(pVector)
+		penalty = this.innerProd(pVerschil, pVerschil)
+		// penalty = this.penalty(pVector)
+		console.log("weights for the combinations are " + this.p)
+		console.log("penalty =" + penalty + " ----- pVerschil =" + pVerschil)
+		
+		if ((this.p.length >= this.groupSizes.length)
+		|| ( penalty < epsilon))
+		{ 	break
+		}
+		
+		this.selection.push( this.selectByIP(pVerschil) )
+
 	}
 	return pVector
 }
