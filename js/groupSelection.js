@@ -574,31 +574,53 @@ groups.prototype.resultCsv = function(selec = this.selection, p=this.p, separato
 {
 	result = ""
 	// add headers
-	result += "combination index-->"
+	result += separator + separator + "combination index-->"
 	for (let i = 0; i<p.length; i++)
 	{	result += separator + i
 	}	
 	// add Weights
-	result += newline+"probability -->"
+	result += newline + separator + separator + "probability of combi-->"
 	for (let i = 0; i<p.length; i++)
 	{	result += separator + p[i]
 	}
 	// add separator
-	result += newline+"------ "
+	result += newline+ "------ " + separator + "------ " 
+		+ separator + "------ " + separator
 	for (let i = 0; i<p.length; i++)
 	{	result += separator + "'-----'"
 	}
 	// add group header   
-	result += newline+"groupsize " + separator + "selection -->"
+	result += newline+"N_persons " + separator + "N_groups" +
+		 separator + "groupsize " + separator + "selection -->"
 	// add combinations
 	for (j = 0; j<this.groupSizes.length; j++)
-	{   result += newline + this.groupSizes[j]
+	{   result += newline + this.nIndividuals[j]
+		 + separator + this.nGroups[j] + separator + this.groupSizes[j]
 	    for (let i = 0; i<p.length; i++)
 	    {	result += separator + this.combinations[selec[i]][j]
 	    }
 	}
 	// optional: add sums?
-	return result
+	result += newline
+	result += newline +"expected persons"+ separator +"expected groups " 
+			+ separator + "individual probability"
+
+	colNames = Array.from("ABCDEFGHIJKLMNOPQRSTU")
+	endColumn = colNames[2+this.selection.length]
+	startColIndex = 3
+	startRow = 7+this.groupSizes.length
+	for (j = 0; j<this.groupSizes.length; j++)
+	{   result += newline +  "=$B"+(startRow+j)+"*$C"+(5+j) + separator 
+			+ "=SUM($D"+(startRow+j)+":$"+endColumn+(startRow+j)+")"
+			+ separator + "=$B"+(startRow+j)+"/$B"+(5+j)
+	    for (let i = 0; i<p.length; i++)
+	    {	result += separator + "="+colNames[startColIndex + i]+"$2*" 
+				+colNames[startColIndex + i]+(5+j) 
+			//+this.combinations[selec[i]][j]*this.p[i]
+	    }
+	}
+		 
+	return result.replaceAll('.', ',')
 }
 
 groups.prototype.selectionString = function(selec = this.selection, newLine = "<br>") // for console: "\r\n"
