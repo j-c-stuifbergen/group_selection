@@ -6,9 +6,9 @@
 
 <h2>JavaScript Arrays</h2>
 
-<button id="csvDownload" onclick="download('groups.csv', optimizer.resultCsv())">Export results to csv file</button>
+<button id="csvDownload1" onclick="download('groups.csv', optimizer.resultCsv())">Export results to csv file</button>
 <p id="text_out">processing... hit [F12] to view console.</p>
-<button id="csvDownload" onclick="download('groups.csv', optimizer.resultCsv())">Export results to csv file</button>
+<button id="csvDownload2" onclick="download('groups.csv', optimizer.resultCsv())">Export results to csv file</button>
 <p id="progress_message"></p>
 
  <script type="text/javascript" async
@@ -20,7 +20,8 @@
 <script src="./js/groupSelection.js"></script>
 <!script src="./js/groupSelection_new.js"></script>
 <script>
-document.getElementById("csvDownload").style.display='none';
+document.getElementById("csvDownload1").style.display='none';
+document.getElementById("csvDownload2").style.display='none';
 
 let displayText = ""
 /* nPlaces = 6;
@@ -107,8 +108,8 @@ if (i<optimizer.selection.length  )
 }
 displayText += " $$ <br>";
 
-displayText += "Now setting probabilities to combinations... <br>";
 displayText += "Everyone should have a chance of "+nPlaces+" / "+optimizer.nCandidates+" = "+optimizer.pAim +"<br>"
+displayText += "Now setting probabilities to combinations... <br>";
 
 document.getElementById("text_out").innerHTML = displayText;
 
@@ -122,13 +123,16 @@ console.log(comb["calculations"])
 displayText += "<br>results after "+nIterations +" iterations:";
 */
 displayText += "<br>  "+optimizer.resultsTable(5)
+displayText += "<br> Quality of the results:";
+
 displayText += "<br>  "+optimizer.chancesTable(3)
 // displayText += "p = "+p +"<br>";
 
 document.getElementById("progress_message").innerHTML ="ready.";
 
 document.getElementById("text_out").innerHTML = displayText;
-document.getElementById("csvDownload").style.display='block';
+document.getElementById("csvDownload1").style.display='block';
+document.getElementById("csvDownload2").style.display='block';
 }
 }
 </script>
