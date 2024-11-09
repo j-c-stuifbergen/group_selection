@@ -10,3 +10,8 @@ Things left to do....
 
 - improve lay-out: integrate deviations in the table
 
+- in selectBestCombinations:
+  only add a vector if the inner product is more than ....
+  (otherwise, the matrix becomes nearly singular)
+
+

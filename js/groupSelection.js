@@ -49,8 +49,10 @@ function groups(nPlaces, groupSizes, nGroups)
 	this.nPlaces = nPlaces  // e.g. 80
 	this.groupSizes = groupSizes // e.g. [1, 2, 3, 5] : groups can be 1, 2, 3 persons
 	this.nGroups = nGroups  // e.g. [40, 8, 2, 1] for 40 individuals, 8 duos, 2 trios...
-	this.nIndividuals = [] // groupSizes * nGroups
 	this.nCandidates = 0
+	this.nIndividuals = [] // groupSizes * nGroups
+	this.indivProba = [] // individual probability
+	this.indivProbaDevi = [] // relative deviation from the average probability
 	this.combinations = [] // an array of combinations that fill all places
 	this.probabilities = [] // same dimensions as this.combinations. 
 	this.selection = [] // can contain indices that refer to this.combinations
@@ -80,10 +82,13 @@ groups.prototype.makeDistribution = function()
  */
 	var pTotal =0;
 	for (let i = 0; i< this.p.length ; i++)
-	{	pTotal+=p[i];
+	{	if(this.p[i] <0)
+		{	this.p[i]=0
+		}
+		pTotal+=this.p[i];
 	}	
 	for (let i = 0; i< this.p.length ; i++)
-	{	this.p[i]=p[i]/pTotal;
+	{	this.p[i]=this.p[i]/pTotal;
 	}
 }
 
@@ -127,7 +132,7 @@ groups.prototype.diff2 = function(v1, v2)
 groups.prototype.derivative = function()
 {	var q = []; // used to adapt p, store deviations from desired probabilities
 	// calculate probabilities per individual 
-	let a = this.pIndividuals(this.p)
+	let a = this.pIndividuals()
 	console.log("kansen: "+ a)
 
 	// calculate difference from desired probability
@@ -230,25 +235,25 @@ groups.prototype.selectNSimilarCombinations = function(N = 6)
 groups.prototype.selectBestCombinations = function(epsilon = 1e-6)
 {	console.log("=== find the best combinations by least squares ===")
 	this.selectFirstCombination()
-// 	this.p=[1];	
+
 	aimVector = new Array(this.groupSizes.length).fill(this.pAim)
 	console.log("aimVector " +aimVector)
-	pVector = Array(this.groupSizes.length)
+	pIndividu = Array(this.groupSizes.length)
 
 	while (true)
 	{	 
 		this.p = leastSquaresForDiagonalIP(
 			this.probabilityMatrix(), aimVector, this.nIndividuals )
 
-		pVector.fill(0)
+		pIndividu.fill(0)
 		for (let i=0; i<this.p.length ; i++)	
-		{	pVector = pVector.add(
+		{	pIndividu = pIndividu.add(
 			this.probabilities[this.selection[i]].timesScalar(this.p[i]))
 		}
 
-		pVerschil = aimVector.subtract(pVector)
+		pVerschil = aimVector.subtract(pIndividu)
 		penalty = this.innerProd(pVerschil, pVerschil)
-		// penalty = this.penalty(pVector)
+		// penalty = this.penalty(pIndividu)
 		console.log("weights for the combinations are " + this.p)
 		console.log("penalty =" + penalty + " ----- pVerschil =" + pVerschil)
 		
@@ -256,25 +261,31 @@ groups.prototype.selectBestCombinations = function(epsilon = 1e-6)
 		|| ( penalty < epsilon))
 		{ 	break
 		}
-		
-		this.selection.push( this.selectByIP(pVerschil) )
-
+		ipResult = this.selectByIP(pVerschil)
+		if (epsilon < ipResult.product )
+		{	this.selection.push(ipResult.index)
+		}
+		else
+		{	//make total of weights = 1
+			this.makeDistribution()
+			break
+		}
 	}
-	return pVector
+	return (penalty < epsilon)
 }
 
 groups.prototype.selectByIP = function(goalVector)
 {		 
-	bestIndex = 0; bestIP = 0
+	bestIndex = 0; biggestIP = 0
 	let i = 0;
 	for (; i<this.combinations.length ; i++)
 	{	ip = this.innerProd(goalVector, this.probabilities[i])
-		if (bestIP < ip)
-		{	bestIP = ip
+		if (biggestIP < ip)
+		{	biggestIP = ip
 			bestIndex = i
 		}
 	}
-	return bestIndex
+	return {product: biggestIP, index:bestIndex}
 }
 
 groups.prototype.solveLeastSquares = function(aimVector)
@@ -282,9 +293,9 @@ groups.prototype.solveLeastSquares = function(aimVector)
 	this.p = leastSquaresForDiagonalIP(
 		this.probabilityMatrix(), aimVector, this.nCandidates )
 
-	pVector.fill(0)
+	pIndividu.fill(0)
 	for (let i=0; i<this.p.length ; i++)	
-	{	pVector.add(
+	{	pIndividu.add(
 		this.probabilities[this.selection[i]].timesScalar(this.p[i]))
 	}
 	return this.p
@@ -406,22 +417,20 @@ groups.prototype.probabilityArray= function()
 {	return this.selectionArray(this.selection, this.probabilities)
 }
 
-groups.prototype.pIndividuals = function(p,relative = false)
+groups.prototype.pIndividuals = function()
 {	// p contains the probability of vectors in de selection
 	var e = [];// expected number of groups that will have a place
-	var a = []; // a[j]=e[j]/nGroups[j]; probability that a member of these groups will have a place
+	this.indivProba = []; // a[j]=e[j]/nGroups[j]; probability that a member of these groups will have a place
 	for (let j = 0; j<this.groupSizes.length; j++)
 	{
 		e[j] = 0; // expected number of groups of groupSize[j]
 		for (let i = 0; i< this.selection.length ; i++)
-		{	e[j] += p[i]*this.combinations[this.selection[i]][j];
+		{	e[j] += this.p[i]*this.combinations[this.selection[i]][j];
 		}
-		a[j]=e[j]/this.nGroups[j];
-		if (relative ==true)
-		{	a[j]=a[j]/this.pAim -1
-		}
+		this.indivProba[j]=e[j]/this.nGroups[j];
+		this.indivProbaDevi[j]=this.indivProba[j]/this.pAim -1
 	}
-	return a
+	return this.indivProba
 }
 groups.prototype.selectAllCombinations = function()
 {	this.selection = Array.from(Array(this.combinations.length).keys())
@@ -495,16 +504,16 @@ groups.prototype.selectedToTex = function (index)
 {
 	return vector_to_TeX (this.combinations[this.selection[index]])
 }
-groups.prototype.calculationTeX = function(i, selec = this.selection)
+groups.prototype.calculationTeX = function(i, includeTot = true, selec = this.selection)
 {	
 	if (selec.length <= i)
 	{	return "There are not more than " + selec.length +" selected combinations."
 			+ i + " is too big."
 	}
-	return this.calculationVectorToTeX ( this.combinations[selec[i]])
+	return this.calculationVectorToTeX ( this.combinations[selec[i]], includeTot)
 }
 
-groups.prototype.calculationVectorToTeX = function(combi)
+groups.prototype.calculationVectorToTeX = function(combi, includeTotal = true)
 {	
 	var result = "\\begin{pmatrix}"
 	let total = 0
@@ -514,35 +523,39 @@ groups.prototype.calculationVectorToTeX = function(combi)
 		result +=  "\\text{"+combi[j]+"x"+this.groupSizes[j] + "} &=& "
 				+ combi[j] * this.groupSizes[j]
 	}
-	result += "\\\\ \\text{total} &=& " + total +"\\end{pmatrix} "
+	if(includeTotal)
+	{	result += "\\\\ \\text{total} &=& " + total 
+	}
+	result += "\\end{pmatrix} "
 	
 	return result 
 }
 
-groups.prototype.chancesTable = function(pVectors, nDigits = 3, pIndividuals = null)
+groups.prototype.chancesTable = function(nDigits = 3)
 {	
-	if (null == pIndividuals)
-	{	pIndividuals = this.pIndividuals(pVectors, false)
-	}
+	this.pIndividuals()
 	
 	var result = "<table>"
 	result +=    "<tr><th>Groups of size</th>"
-		+    "<th>probability for persons<br>in this group </th><th>expected number <br> of groups of this size</th>"
+		+    "<th>probability for persons<br>in this group </th>"
+		+    "<th>rel. error = <br>proba/average - 1</th>"
+		+    "<th>expected number <br> of groups of this size</th>"
 	result +=    "<th>Expected number <br>of persons</th></tr>"
 
 	var totalCandidates = 0
 	var totalAdmitted = 0
 	for (j=0; j<this.groupSizes.length; j++)
 	{	let nCandidates = (this.nGroups[j]*this.groupSizes[j])
-		let expectedGroups = (pIndividuals[j]*this.nGroups[j])
+		let expectedGroups = (this.indivProba[j]*this.nGroups[j])
 		let expectedAdmitted = expectedGroups*this.groupSizes[j]
 		totalCandidates += nCandidates
 		totalAdmitted += (expectedAdmitted)
 		result += "<tr><td>" + this.nGroups[j]+" x " + this.groupSizes[j] 
-			+ " person(s) = " + nCandidates
-			+ "</td><td align='right'>"+pIndividuals[j].toFixed(8) +"</td>"
+			+ " person(s) = " + nCandidates +"</td>"
+			+ "<td align='right'>"+this.indivProba[j].toFixed(8) +"</td>"
+			+ "<td align='right'>"+this.indivProbaDevi[j].toFixed(nDigits) +"</td>"
 			+ "<td align='right'>" 
-			+ this.nGroups[j] +	" x "+pIndividuals[j].toFixed(nDigits) 
+			+ this.nGroups[j] +	" x "+this.indivProba[j].toFixed(nDigits) 
 			+ " = " 	+ expectedGroups.toFixed(nDigits)
 			+ "</td><td align='right'>" +expectedGroups.toFixed(nDigits) + " x " 
 			+ (this.groupSizes[j]) + " = "
@@ -551,11 +564,60 @@ groups.prototype.chancesTable = function(pVectors, nDigits = 3, pIndividuals = n
 	}
 	result += "<tr><th align='right'> total: "+totalCandidates+"</th>" +
 		  "<th align='right'>average P: "+this.pAim.toFixed(nDigits) + "</th><td></td>" +
+		"<th></th>" +
 		  "<th align='right'> total: "+totalAdmitted.toFixed(9) + "</th>" +
 		"</table>"
 	
 	return result 
 }
+
+groups.prototype.resultsTable = function(nDigits = 8)
+{	
+	var result = "<table>"
+	result +=    "<tr>"
+                + 	"<th>number of<br>persons</th>"
+                + 	"<th>Groups of size</th>"
+                + 	"<th>number of groups</th>"
+	for (i=0; i<this.selection.length; i++)
+	{	result += "<th>combination "+i+"<br>probability:<br>"
+		+this.p[i].toFixed(nDigits)+"</th>"
+	}
+	result +="</tr>\n"
+	for (j =0; j<this.groupSizes.length; j++)
+	{
+		result +=    "<tr><td align='right'>" + (this.groupSizes[j]*this.nGroups[j]) +"</td> "
+		result +=    "<td align='right'>" + (this.groupSizes[j]) +"</td> "
+		result +=    "<td align='right'>" + (this.nGroups[j]) +"</td> "
+		for (i=0; i<this.selection.length; i++)
+		{	result += "<td align='right'>"
+			 + this.combinations[this.selection[i]][j] +"</td>"
+		}
+		result += "</tr>\n"
+	}
+	result +=    "<tr>"
+                + 	"<td> </td>"
+                + 	"<td> </td>"
+                + 	"<th>probability</th>"
+	for (i=0; i<this.selection.length; i++)
+	{	result += "<th>"+this.p[i]+"</th>"
+	}
+	result +="</tr>\n"
+	result +=    "<tr>"
+                + 	"<td> </td>"
+                + 	"<td> </td>"
+                + 	"<th>cumulative(sum)</th>"
+	let total = 0
+	for (i=0; i<this.selection.length; i++)
+	{	total += this.p[i]
+		result += "<th>"+total+"</th>"
+	}
+	result +="</tr>\n"
+
+	result += 	"</table>\n"
+	
+	return result 
+}
+
 groups.prototype.resultCsv = function(selec = this.selection, p=this.p, separator = "\t", newline = "\r\n")
 {
 	result = ""

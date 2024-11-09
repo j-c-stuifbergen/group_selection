@@ -209,7 +209,7 @@ function innerProductForUnitIP(v1,v2)
 	}
 	result = 0
 	for (i =0; i<v2.length; i++)
-	{	result += v1t[i]*v2[i]
+	{	result += v1[i]*v2[i]
 	}
 	return result
 }
