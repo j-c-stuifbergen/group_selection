@@ -14,7 +14,8 @@ a.description{
     position:relative; /*this is the key*/
     z-index:24; /* background-color:#ccc; */
     color:#005500; 
-    text-decoration:none}a.verwijzing{
+    text-decoration:none}
+a.verwijzing{
     position:relative; /*this is the key*/
     z-index:24; /* background-color:#ccc; */
     color:#005500; 
@@ -32,8 +33,23 @@ a.verwijzing:hover span{ /*the span will display just on :hover state*/
     border:1px solid #0cf;
     background-color:#cff; color:#000055;
     text-align: center}
-a.verwijzing:link	{	color:		bleu   }
+
+a.verwijzing:link	{	color:		bleu   }
 a.verwijzing:hover	{	font-weight: bold	
 				color: 		navy	}
+
+    .number-box {
+      margin-bottom: 10px;
+    }
+    .buttons {
+      display: inline-block;
+      margin: 0 5px;
+      cursor: pointer;
+    }
+    .number-display {
+      display: inline-block;
+      margin: 0 10px;
+    }
+
 
 

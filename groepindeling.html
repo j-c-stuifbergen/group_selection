@@ -6,9 +6,9 @@
 
 <h2>JavaScript Arrays</h2>
 
-<button id="csvDownload1" onclick="download('groups.csv', optimizer.resultCsv())">Export results to csv file</button>
+<button id="csvDownload1" onclick="download('groups.csv', optimizer.resultCsv())" hidden>Export results to csv file</button>
 <p id="text_out">processing... hit [F12] to view console.</p>
-<button id="csvDownload2" onclick="download('groups.csv', optimizer.resultCsv())">Export results to csv file</button>
+<button id="csvDownload2" onclick="download('groups.csv', optimizer.resultCsv())"hidden>Export results to csv file</button>
 <p id="progress_message"></p>
 
  <script type="text/javascript" async
@@ -20,8 +20,6 @@
 <script src="./js/groupSelection.js"></script>
 <!script src="./js/groupSelection_new.js"></script>
 <script>
-document.getElementById("csvDownload1").style.display='none';
-document.getElementById("csvDownload2").style.display='none';
 
 let displayText = ""
 /* nPlaces = 6;
@@ -96,9 +94,9 @@ if (! optimizer.selectBestCombinations())
 {	displayText += " --- I could not find a good solution ! --- "
 }
 // optimizer.selection = optimizer.selection.slice(0,nSelected)
-displayText += " the selected combinations are <br> \n $$";
+displayText += " The 8 first selected combinations are <br> \n $$";
 var i = 0;
-for (i=0; i<25 && i<optimizer.selection.length; i++)
+for (i=0; i<8 && i<optimizer.selection.length; i++)
 {
 	displayText +=  optimizer.selectedToTex(i)
 	displayText +=  optimizer.calculationTeX(i,false)
