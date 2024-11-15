@@ -44,11 +44,11 @@ function htmlFromArray(q)
 {	return "[" + q + "]" 
 }
 
-function groups(nPlaces, groupSizes, nGroups) 
+function groups(nPlaces, groupInfo) // groupSizes, nGroups) 
 {
 	this.nPlaces = nPlaces  // e.g. 80
-	this.groupSizes = groupSizes // e.g. [1, 2, 3, 5] : groups can be 1, 2, 3 persons
-	this.nGroups = nGroups  // e.g. [40, 8, 2, 1] for 40 individuals, 8 duos, 2 trios...
+	this.groupSizes = groupInfo.map(item => item.groupSize) // e.g. [1, 2, 3, 5] : groups can be 1, 2, 3 persons
+	this.nGroups = groupInfo.map(item => item.nGroups)  // e.g. [40, 8, 2, 1] for 40 individuals, 8 duos, 2 trios...
 	this.nCandidates = 0
 	this.nIndividuals = [] // groupSizes * nGroups
 	this.indivProba = [] // individual probability
@@ -645,29 +645,30 @@ groups.prototype.resultCsv = function(selec = this.selection, p=this.p, separato
 	{	result += separator + "-----"
 	}
 	// add group header   
-	result += newline+"N_persons " + separator + "N_groups" +
-		 separator + "groupsize " + separator + "selection -->"
+	result += newline+"N_persons " + separator + "groupsize " +
+		 separator + "N_groups" + separator + "selection -->"
 	// add combinations
 	for (j = 0; j<this.groupSizes.length; j++)
 	{   result += newline + this.nIndividuals[j]
-		 + separator + this.nGroups[j] + separator + this.groupSizes[j]
+		 + separator + this.groupSizes[j] + separator + this.nGroups[j] 
 	    for (let i = 0; i<p.length; i++)
 	    {	result += separator + this.combinations[selec[i]][j]
 	    }
 	}
 	// optional: add sums?
 	result += newline
-	result += newline +"expected persons"+ separator +"expected groups " 
-			+ separator + "individual probability"
-
+	result += newline + "individual probability" + separator +
+			"expected persons"+ separator +"expected groups " 
+			
 	colNames = Array.from("ABCDEFGHIJKLMNOPQRSTU")
 	endColumn = colNames[2+this.selection.length]
 	startColIndex = 3
 	startRow = 7+this.groupSizes.length
 	for (j = 0; j<this.groupSizes.length; j++)
-	{   result += newline +  "=$B"+(startRow+j)+"*$C"+(5+j) + separator 
+	{   result += newline + "=$C"+(startRow+j)+"/$C"+(5+j)
+		+ separator +  "=$C"+(startRow+j)+"*$B"+(5+j) + separator 
 			+ "=SUM($D"+(startRow+j)+":$"+endColumn+(startRow+j)+")"
-			+ separator + "=$B"+(startRow+j)+"/$B"+(5+j)
+			
 	    for (let i = 0; i<p.length; i++)
 	    {	result += separator + "="+colNames[startColIndex + i]+"$2*" 
 				+colNames[startColIndex + i]+(5+j) 

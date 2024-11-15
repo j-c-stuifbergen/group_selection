@@ -67,15 +67,15 @@
 
   function addNumberBox() {
     const numberInput = document.getElementById('numberInput');
-    const inputValue = parseInt(numberInput.value, 10);
+    const newGroupSize = parseInt(numberInput.value, 10);
 
-    if (isNaN(inputValue)) {
+    if (isNaN(newGroupSize)) {
       alert('Please enter a valid number');
       return;
     }
 
-    // Check if the inputValue already exists as an initial number
-    const existingData = storedData.find(item => item.groupSize === inputValue);
+    // Check if the newGroupSize already exists as an initial number
+    const existingData = storedData.find(item => item.groupSize === newGroupSize);
 
     if (existingData) {
       alert('  This number has already been used in another box!');
@@ -89,11 +89,10 @@
     const id = 'box-' + Date.now(); // Unique ID for each number box
     // Store the initial data
     storedData.push({
-      groupSize: inputValue,
-      N: 1, // Start with N = 1
+      groupSize: newGroupSize,
+      nGroups: 1, // Start with N = 1
       id: id
     });
-
     // Create the minus button
     const minusButton = document.createElement('button');
     minusButton.textContent = '-';
@@ -104,7 +103,7 @@
     const numberDisplay = document.createElement('span');
     numberDisplay.id = id;
     numberDisplay.classList.add('number-display');
-    numberDisplay.textContent =groupString(1, inputValue);
+    numberDisplay.textContent =groupString(1, newGroupSize);
 
     // Create the plus button
     const plusButton = document.createElement('button');
@@ -125,18 +124,35 @@
 
     // show the findCombinations button
     document.getElementById('findCombinations').removeAttribute("hidden")
+
+    // keep sorted by groupSize
+    for (i=storedData.length -2; 0<= i ; i--)
+    {   if (newGroupSize < storedData[i].groupSize )
+        {   storedData[i+1].groupSize = storedData[i].groupSize
+            storedData[i+1].nGroups = storedData[i].nGroups
+	    storedData[i].groupSize = newGroupSize
+            storedData[i].nGroups = 1
+	    updateText(storedData[i+1])
+	    updateText(storedData[i])
+	}
+     }
+    
   }
 
+  function updateText(data)
+  {
+	document.getElementById(data.id).textContent = groupString(data.nGroups, data.groupSize) ;
+  }
   function updateNumber(id, change) {
     // Find the stored data by id
     const data = storedData.find(item => item.id === id);
     if (!data) return;
 
-    data.N += change;
+    data.nGroups += change;
 
     // Update the number display and check if it should disappear
     const numberDisplay = document.getElementById(id);
-    if (data.N === 0) {
+    if (data.nGroups === 0) {
       // Remove the entire number box from the DOM when N == 0
       const numberBox = numberDisplay.parentElement;
       numberBox.remove();  // Completely remove the box from the DOM
@@ -147,15 +163,15 @@
 
 	}
     } else {
-      numberDisplay.textContent = groupString(data.N, data.groupSize);
+	updateText(data)
     }
   }
 
   function groupString(nGroups, groupSize)
   {  if (1<groupSize)
-     {  return ""+nGroups+" x "+groupSize+"\ persons"
+     {  return "\ "+nGroups+" x "+groupSize+"\ persons\ "
      }
-     return ""+nGroups+" x "+groupSize+"\ person"
+     return "\ "+nGroups+" x "+groupSize+"\ person\ "
   }
 
   function checkNPlaces()
@@ -177,13 +193,10 @@
     }
     storedData.sort((a, b) => a.groupSize > b.groupSize);
     var displayText = "" 
-    // displayText = storedData.map(item => groupString (item.N, item.groupSize)).join('\n');
-    const groupSizes = storedData.map(item => item.groupSize);
-    const nGroups = storedData.map(item => item.N);
 
     document.getElementById('output').textContent = output;
 
-    optimizer = new groups(nPlaces,groupSizes,nGroups)
+    optimizer = new groups(nPlaces,storedData) // groupSizes,nGroups)
 
 if (optimizer.nCandidates <= nPlaces)
 {	displayText += "There is a place for all candidates! <br>\n"
