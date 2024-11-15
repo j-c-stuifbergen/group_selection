@@ -80,16 +80,19 @@ groups.prototype.makeDistribution = function()
  * required: 0<=this.p[i] for each i
  * required: 0<sum of this.p[i]
  */
+	var coefficientsAreValid = true
 	var pTotal =0;
 	for (let i = 0; i< this.p.length ; i++)
 	{	if(this.p[i] <0)
 		{	this.p[i]=0
+			 coefficientsAreValid = false
 		}
 		pTotal+=this.p[i];
 	}	
 	for (let i = 0; i< this.p.length ; i++)
 	{	this.p[i]=this.p[i]/pTotal;
 	}
+	return coefficientsAreValid
 }
 
 groups.prototype.setIndividuals = function()
@@ -171,7 +174,7 @@ groups.prototype.innerProd = function(prob1, prob2)
 	return innerProductForDiagonalIP(prob1, prob2, this.nIndividuals)
 }
 
-groups.prototype.selectFirstCombination = function()
+/* groups.prototype.selectFirstCombination = function()
 {	this.selection = [0]
 	penalty = this.penalty(this.probabilities[0])
 
@@ -183,6 +186,7 @@ groups.prototype.selectFirstCombination = function()
 		}
 	}
 }
+*/
 
 groups.prototype.selectBestCombinationsOld = function()
 {	this.selection = [0]
@@ -234,21 +238,20 @@ groups.prototype.selectNSimilarCombinations = function(N = 6)
 
 groups.prototype.selectBestCombinations = function(epsilon = 1e-6)
 {	console.log("=== find the best combinations by least squares ===")
-	this.selectFirstCombination()
 
 	aimVector = new Array(this.groupSizes.length).fill(this.pAim)
 	console.log("aimVector " +aimVector)
-	pIndividu = Array(this.groupSizes.length)
+	this.setProbabilities()
+
+	pIndividu = Array(this.groupSizes.length).fill(0)
+	this.p = []
 
 	while (true)
 	{	 
-		this.p = leastSquaresForDiagonalIP(
-			this.probabilityMatrix(), aimVector, this.nIndividuals )
-
 		pIndividu.fill(0)
 		for (let i=0; i<this.p.length ; i++)	
 		{	pIndividu = pIndividu.add(
-			this.probabilities[this.selection[i]].timesScalar(this.p[i]))
+			this.probabilities[ this.selection[i]]. timesScalar(this.p[i]))
 		}
 
 		pVerschil = aimVector.subtract(pIndividu)
@@ -266,12 +269,14 @@ groups.prototype.selectBestCombinations = function(epsilon = 1e-6)
 		{	this.selection.push(ipResult.index)
 		}
 		else
-		{	//make total of weights = 1
-			this.makeDistribution()
-			break
+		{	break
 		}
+		this.p = leastSquaresForDiagonalIP(
+			this.probabilityMatrix(), aimVector, this.nIndividuals )
+
 	}
-	return (penalty < epsilon)
+			
+	return this.makeDistribution() && (penalty < epsilon)
 }
 
 groups.prototype.selectByIP = function(goalVector)

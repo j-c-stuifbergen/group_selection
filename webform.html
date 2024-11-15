@@ -16,7 +16,7 @@
   <input type="number" id="nPlacesInput" name="nPlacesInput" min="1" onkeydown="preventNegativeInput(event)" required><br>
   <label for="numberInput">Enter a group size:</label>
   <input type="number" id="numberInput" name="numberInput" min="1" onkeydown="preventNegativeInput(event)">
-  <button type="button" onclick="addNumberBox(this)" >Add Number</button><br>
+  <button type="button" onclick="addNumberBox(this)" >add group</button><br>
 </form>
 
 <h3>groups</h3>
@@ -181,7 +181,6 @@
     const groupSizes = storedData.map(item => item.groupSize);
     const nGroups = storedData.map(item => item.N);
 
-
     document.getElementById('output').textContent = output;
 
     optimizer = new groups(nPlaces,groupSizes,nGroups)
@@ -215,22 +214,20 @@ if (0 == optimizer.combinations.length)
 else
 {
 
-displayText += "<br>number of valid combinations : "+ optimizer.combinations.length+"<br> "
+displayText += "<br>number of valid combinations : "+ optimizer.combinations.length
 document.getElementById("output").innerHTML = displayText;
 
-optimizer.setProbabilities()
-optimizer.selectFirstCombination()
-progressText += "First combination OK. <br>\n"
+progressText += "select combinations... <br>\n"
 document.getElementById("progress_message").innerHTML = progressText;
 
 if (! optimizer.selectBestCombinations())
-{	displayText += " --- I could not find a good solution ! --- "
+{	displayText += "<br> --- I could not find a good solution ! --- "
 }
-displayText += " The 8 first selected combinations are <br> \n $$";
+displayText += "<br> Some selected combinations are <br> \n $$";
 var i = 0;
 for (i=0; i<8 && i<optimizer.selection.length; i++)
 {
-	displayText +=  optimizer.selectedToTex(i)
+	// displayText +=  optimizer.selectedToTex(i)
 	displayText +=  optimizer.calculationTeX(i,false)
 }
 if (i<optimizer.selection.length  )
@@ -238,6 +235,7 @@ if (i<optimizer.selection.length  )
 }
 displayText += " $$ <br>";
 displayText += "Everyone should have a chance of "+nPlaces+" / "+optimizer.nCandidates+" = "+optimizer.pAim +"<br>"
+displayText += "<br> I recommend the following probabilities for each combination:";
 
 document.getElementById("output").innerHTML = displayText;
 
