@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Place allocation</title>
+</head>
+<link rel="stylesheet" type="text/css" href="../index.css" /> 
+
+<body>
+
+<h2>Place allocation</h2>
+
+<div id="explanation">
+<h3>The problem</h3>
+<p>Suppose you want to invite your friends, relatives etc. to your birthday party - 50 persons together.<br>
+But you can only accomodate 30 of them...<br>
+Begin fair, you will draw sorts, so you put everyone's name on a folded paper in a jar.<br>
+Just before you start to draw the names, you realize that Melissa wouldn't like to come without her friend Astrid, and Uncle Fred needs to come with his son Abel, and your hockey team will never split up!<br>
+So you write 1 lot for Fred and Abel, 1 for the complete hockey team etc.</p>
+<p>So you take names from the jar, sometimes 2 at a time, sometimes a whole family at once.<br>
+Finally, there two places left. But in the jar are still groups of 3 or more persons left. <br>
+What will you do if you draw such a group? If you ignore them it means that they don't have a fair chance to attend your party. <br>
+And you want to be fair.</p>
+<p>Should you just put all the sorts back in the jar and start the process again?
+<br> Actually, this <a href='./dont_start_new.html'>doesn't </a> guarantee fair chances either. <a href='./dont_start_new.html'>(proof)</a><br>
+</p>
+
+<h3>The solution</h3>
+<p>The solution would be:
+<ul>
+<li>first count how many groups of 2, 3, 4 (etcetera) you want to invite. Oh, and don't forget the solo guests.
+<li>then try which combinations are possible to fill all the available places. 
+<br><img src='./img/sum_groups.png' alt='(e.g. 50 = 21 x 1 + 5 x 2 + 1 x 4 + 3 x 5)'/>
+
+<li>assign to every combination a probability between 0% and 100%, such that every individual will have the same chance!
+	<br>(The probabilities must add up to 100%)
+<li> draw a number between 0 and 100. If you want be really fair, draw a number with several digits after the period (computers can do that).
+<br> This selects your combination.
+<li> Now you now how many groups of each size you must invite. If necessary, draw sorts between groups of the same size in any way you like.
+</ul>
+
+You may guess that a computer would be helpful - it is!
+<br>
+</p>
+<h3>Instructions</h3>
+<p>
+Enter the number of availabel places.<br>
+When you enter a group size, it will be added below.<br>
+<img src='./img/number_fields.png' alt='number fields: availabel places and group size'/>
+<br>
+You can change the number of groups by clicking on the "+" button.
+<img src='./img/plus_button.png' alt=' 5 x 1 person, 6 x 2 persons etcetera'/>
+Then click "find combinations".
+</p>
+<p>
+You can export the results to a .csv file, which can be opened in Open Office Calc or Microsoft Excel, so you can check that everyone has an equal opportunity.
+</p>
+
+</div>
+
+<a href='./webform.html'>Click here to start</a>
+
