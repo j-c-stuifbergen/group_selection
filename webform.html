@@ -11,18 +11,22 @@
 
 <h2>Place allocation</h2>
 
+<div id="explanation"> <h3>instructions</h3>
+Enter the number of availabel places.<br>
+When you enter a group size, it will be added below.<br>
+</div>
+
 <form id="dynamicForm">
   <label for="nPlaces">availabel places:</label>
   <input type="number" id="nPlacesInput" name="nPlacesInput" min="1" onkeydown="preventNegativeInput(event)" required><br>
   <label for="numberInput">Enter a group size:</label>
-  <input type="number" id="numberInput" name="numberInput" min="1" onkeydown="preventNegativeInput(event)">
+  <input type="number" id="numberInput" name="numberInput" min="1" >
   <button type="button" onclick="addNumberBox(this)" >add group</button><br>
 </form>
 
 <h3>groups</h3>
 <div id="numberBoxes"></div>
 <button type="button" id="findCombinations" onclick="findCombinations()" hidden>find combinations</button>
-
 
 <h3>Results</h3>
 <button id="csvDownload1" onclick="download('groups.csv', optimizer.resultCsv())" hidden >Export results to csv file</button>
@@ -39,11 +43,21 @@
 <script src="./js/groupSelection.js"></script>
 
 <script>
-
   let storedData = [];
+
+  // Event listener for Enter key to check nPlaces
+  document.getElementById('nPlacesInput').addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault(); // Prevent form submission (in case Enter submits the form)
+      checkNPlaces(); // Trigger the function to add a new number box
+    }
+  });
 
   // Event listener for Enter key to trigger addNumberBox
   document.getElementById('numberInput').addEventListener('keypress', function(event) {
+    if (event.key === "-" ) {
+      event.preventDefault();  // Prevent "-" key and down arrow
+    }
     if (event.key === 'Enter') {
       event.preventDefault(); // Prevent form submission (in case Enter submits the form)
       addNumberBox(); // Trigger the function to add a new number box
@@ -57,15 +71,10 @@
     }
   }
 
-  // Event listener for Enter key to trigger addNumberBox
-  document.getElementById('nPlacesInput').addEventListener('keypress', function(event) {
-    if (event.key === 'Enter') {
-      event.preventDefault(); // Prevent form submission (in case Enter submits the form)
-      checkNPlaces(); // Trigger the function to add a new number box
-    }
-  });
-
   function addNumberBox() {
+    // remove the explanation
+    // document.getElementById("explanation").textContent = ""
+
     const numberInput = document.getElementById('numberInput');
     const newGroupSize = parseInt(numberInput.value, 10);
 
@@ -205,14 +214,13 @@ if (optimizer.nCandidates <= nPlaces)
 				(nPlaces - optimizer.nCandidates) + 
 				"places left. <br>\n"
 		}
+document.getElementById("output").innerHTML = displayText;
 }
-else
+else // more candidates than places
 {
 displayText += "<br>There are " +optimizer.nCandidates+ " candidats "
 		+ "for only "+ nPlaces + " places. <br>\n"
 
-
-}
 document.getElementById("output").innerHTML = displayText;
 
 progressText = "I am checking possible combinations. <br>\n"
@@ -223,8 +231,9 @@ optimizer.setCombinations()
 if (0 == optimizer.combinations.length)
 {	displayText += "Not a single combination of these groups is possible! "
 	document.getElementById("output").innerHTML = displayText;
+	document.getElementById("progress_message").innerHTML = "Ready.";
 }
-else
+else // try valid combinations
 {
 
 displayText += "<br>number of valid combinations : "+ optimizer.combinations.length
@@ -268,8 +277,9 @@ document.getElementById("csvDownload1").removeAttribute("hidden");
 document.getElementById("csvDownload2").removeAttribute("hidden");
   MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById("output")]);
 
-}
-}
+} // try valid combinations
+} // more candidates than places
+} // findCombinations() 
 </script>
 
 </body>

@@ -174,7 +174,7 @@ groups.prototype.innerProd = function(prob1, prob2)
 	return innerProductForDiagonalIP(prob1, prob2, this.nIndividuals)
 }
 
-/* groups.prototype.selectFirstCombination = function()
+groups.prototype.selectFirstCombination = function()
 {	this.selection = [0]
 	penalty = this.penalty(this.probabilities[0])
 
@@ -186,7 +186,6 @@ groups.prototype.innerProd = function(prob1, prob2)
 		}
 	}
 }
-*/
 
 groups.prototype.selectBestCombinationsOld = function()
 {	this.selection = [0]
@@ -244,10 +243,13 @@ groups.prototype.selectBestCombinations = function(epsilon = 1e-6)
 	this.setProbabilities()
 
 	pIndividu = Array(this.groupSizes.length).fill(0)
-	this.p = []
+
+	this.selectFirstCombination()
 
 	while (true)
 	{	 
+		this.p = leastSquaresForDiagonalIP(
+			this.probabilityMatrix(), aimVector, this.nIndividuals )
 		pIndividu.fill(0)
 		for (let i=0; i<this.p.length ; i++)	
 		{	pIndividu = pIndividu.add(
@@ -271,9 +273,6 @@ groups.prototype.selectBestCombinations = function(epsilon = 1e-6)
 		else
 		{	break
 		}
-		this.p = leastSquaresForDiagonalIP(
-			this.probabilityMatrix(), aimVector, this.nIndividuals )
-
 	}
 			
 	return this.makeDistribution() && (penalty < epsilon)
