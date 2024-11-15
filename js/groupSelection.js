@@ -46,8 +46,6 @@ function htmlFromArray(q)
 
 function groups(nPlaces, groupSizes, nGroups) 
 {
-	var that = this
-
 	this.nPlaces = nPlaces  // e.g. 80
 	this.groupSizes = groupSizes // e.g. [1, 2, 3, 5] : groups can be 1, 2, 3 persons
 	this.nGroups = nGroups  // e.g. [40, 8, 2, 1] for 40 individuals, 8 duos, 2 trios...
@@ -178,7 +176,7 @@ groups.prototype.selectFirstCombination = function()
 	penalty = this.penalty(this.probabilities[0])
 
 	for(let i = 1; i<this.combinations.length ; i++)
-	{	newPenalty = this.penalty(that.probabilities[i])
+	{	newPenalty = this.penalty(this.probabilities[i])
 		if (newPenalty < penalty)
 		{	penalty = newPenalty
 			this.selection[0] = i
@@ -440,8 +438,7 @@ groups.prototype.selectAllCombinations = function()
 
 groups.prototype.setCombinations = function()
 {
-	var that = this
-	function recursivePart(nPlaces,nGroupsIn)
+	const recursivePart = (nPlaces, nGroupsIn) =>
 	{
 		var nGroups = []
 		for(let i=0;i<nGroupsIn.length;i++)
@@ -450,12 +447,12 @@ groups.prototype.setCombinations = function()
 		var max = nGroups.pop()
 		if(0==nGroups.length)
 		{
-			if ( max*that.groupSizes[0] < nPlaces)
+			if ( max*this.groupSizes[0] < nPlaces)
 			{	// cannot fill all places
 				return []
 			}
-			if (0==nPlaces%that.groupSizes[0])
-			{	return [[nPlaces/that.groupSizes[0]]]
+			if (0==nPlaces%this.groupSizes[0])
+			{	return [[nPlaces/this.groupSizes[0]]]
 			}
 			// cannot fill all places without splitting a group
 			return []
@@ -464,7 +461,7 @@ groups.prototype.setCombinations = function()
 		var result = []
 			
 		for (let i = 0; i<=max; i++)
-		{	nLeft = nPlaces - i*that.groupSizes[nGroups.length]
+		{	nLeft = nPlaces - i*this.groupSizes[nGroups.length]
 			if (0<nLeft)
 			{
 				subset = recursivePart(nLeft, nGroups)
@@ -476,6 +473,7 @@ groups.prototype.setCombinations = function()
 		}
 		return result
 	}
+
 	this.combinations = recursivePart(this.nPlaces,this.nGroups)
 }
 groups.prototype.calculationString = function(index, selec = this.selection)
