@@ -248,7 +248,10 @@ groups.prototype.selectBestCombinations = function(epsilon = 1e-6)
 	this.p = []		
 	
 	this.selectFirstCombination() // perhaps not necessary?
-//	this.p = [1] //otherwise, pIndividu will remain fill(0) 
+	// perform projection, so the inner product with pDiff will be 0
+	this.p = leastSquaresForDiagonalIP(
+		this.probabilityMatrix(), aimVector, this.nIndividuals )
+	
 	while (true)
 	{	 
 		pIndividu.fill(0)
@@ -257,25 +260,30 @@ groups.prototype.selectBestCombinations = function(epsilon = 1e-6)
 			this.probabilities[ this.selection[i]]. timesScalar(this.p[i]))
 		}
 
-		pVerschil = aimVector.subtract(pIndividu)
-		penalty = this.innerProd(pVerschil, pVerschil)
+		pDiff = aimVector.subtract(pIndividu)
+		penalty = this.innerProd(pDiff, pDiff)
 		// penalty = this.penalty(pIndividu)
 		console.log("weights for the combinations are " + this.p)
-		console.log("penalty =" + penalty + " ----- pVerschil =" + pVerschil)
+		console.log("penalty =" + penalty + " ----- pDiff =" + pDiff)
 		
-		if ((this.p.length >= this.groupSizes.length)
-		|| ( penalty < epsilon))
-		{ 	break
+		if ( penalty < epsilon) // objectives reached!
+		{  	break
 		}
-		ipResult = this.selectByIP(pVerschil)
+		if (this.p.length >= this.groupSizes.length) 
+		{ 	// I can't add another vector for Least Squares
+			break
+		}
+
+		ipResult = this.selectByIP(pDiff)
 		if (epsilon < ipResult.product )
 		{	this.selection.push(ipResult.index)
+			this.p = leastSquaresForDiagonalIP(
+				this.probabilityMatrix(), aimVector, this.nIndividuals )
 		}
 		else
-		{	break
+		{	// The new vector doesn't contribute significantly
+			break
 		}
-		this.p = leastSquaresForDiagonalIP(
-			this.probabilityMatrix(), aimVector, this.nIndividuals )
 	}
 			
 	return this.makeDistribution() && (penalty < epsilon)

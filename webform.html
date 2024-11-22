@@ -26,12 +26,15 @@ When you enter a group size, it will be added below.<br>
 
 <h3>groups</h3>
 <div id="numberBoxes"></div>
-<button type="button" id="findCombinations" onclick="findCombinations()" hidden>find combinations</button>
+<button type="button" id="findCombinationsByIP" onclick="findCombinationsByIP()" hidden>find combinations</button>
+<div id="numberBoxes"></div>
+<button type="button" id="findCombinationsByIterations" onclick="findCombinationsByIterations()" hidden>find combinations</button>
 
 <h3>Results</h3>
 <button id="csvDownload1" onclick="download('groups.csv', optimizer.resultCsv())" hidden >Export results to csv file</button>
 <p id="output"></p>
 <button id="csvDownload2" onclick="download('groups.csv', optimizer.resultCsv())" hidden>Export results to csv file</button>
+<h3>status</h3>
 <p id="progress_message"></p>
 
  <script type="text/javascript" async
@@ -43,8 +46,10 @@ When you enter a group size, it will be added below.<br>
 <script src="./js/groupSelection.js"></script>
 
 <script>
-  let storedData = [];
-
+  var storedData = [];
+    var displayText = "" 
+    var nPlaces
+   var optimizer 
   // Event listener for Enter key to check nPlaces
   document.getElementById('nPlacesInput').addEventListener('keypress', function(event) {
     if (event.key === 'Enter') {
@@ -132,7 +137,8 @@ When you enter a group size, it will be added below.<br>
     numberInput.value = '';
 
     // show the findCombinations button
-    document.getElementById('findCombinations').removeAttribute("hidden")
+    document.getElementById('findCombinationsByIP').removeAttribute("hidden")
+    document.getElementById('findCombinationsByIterations').removeAttribute("hidden")
 
     // keep sorted by groupSize
     for (i=storedData.length -2; 0<= i ; i--)
@@ -168,7 +174,8 @@ When you enter a group size, it will be added below.<br>
       // Remove the data from the storedData array
       storedData = storedData.filter(item => item.id !== id);
 	if (0===storedData.length)
-	{     document.getElementById('findCombinations').setAttribute("hidden", 'hidden')
+	{     document.getElementById('findCombinationsByIP').setAttribute("hidden", 'hidden')
+	document.getElementById('findCombinations').setAttribute("hidden", 'hidden')
 
 	}
     } else {
@@ -193,93 +200,103 @@ When you enter a group size, it will be added below.<br>
     return true
    }
 
-  function findCombinations() {
+
+  function checkNumbers() {
     if (checkNPlaces())
     {   nPlaces = parseInt(nPlacesInput.value, 10);
     }
     else
-    { return
+    { return false
     }
     storedData.sort((a, b) => a.groupSize > b.groupSize);
-    var displayText = "" 
+    displayText = "" 
 
     document.getElementById('output').textContent = output;
 
     optimizer = new groups(nPlaces,storedData) // groupSizes,nGroups)
 
-if (optimizer.nCandidates <= nPlaces)
-{	displayText += "There is a place for all candidates! <br>\n"
-	if (optimizer.nCandidates < nPlaces)
-		{	displayText += "And there are " +
-				(nPlaces - optimizer.nCandidates) + 
-				"places left. <br>\n"
-		}
-document.getElementById("output").innerHTML = displayText;
-}
-else // more candidates than places
-{
-displayText += "<br>There are " +optimizer.nCandidates+ " candidats "
-		+ "for only "+ nPlaces + " places. <br>\n"
-
-document.getElementById("output").innerHTML = displayText;
-
-progressText = "I am checking possible combinations. <br>\n"
-document.getElementById("progress_message").innerHTML = progressText;
-
-console.log("trying combinations...")
-optimizer.setCombinations()
-if (0 == optimizer.combinations.length)
-{	displayText += "Not a single combination of these groups is possible! "
+	if (optimizer.nCandidates <= nPlaces)
+	{	displayText += "There is a place for all candidates! <br>\n"
+		if (optimizer.nCandidates < nPlaces)
+			{	displayText += "And there are " +
+					(nPlaces - optimizer.nCandidates) + 
+					" places left. <br>\n"
+			}
 	document.getElementById("output").innerHTML = displayText;
-	document.getElementById("progress_message").innerHTML = "Ready.";
+	return false
+	}
+	else // more candidates than places
+	{
+	displayText += "<br>There are " +optimizer.nCandidates+ " candidates "
+			+ "for only "+ nPlaces + " places. <br>\n"
+
+	document.getElementById("output").innerHTML = displayText;
+	return true
+	}
 }
-else // try valid combinations
+
+function setCombinations() 
 {
+	progressText = "I am checking possible combinations. <br>\n"
+	document.getElementById("progress_message").innerHTML = progressText;
 
-displayText += "<br>number of valid combinations : "+ optimizer.combinations.length
-document.getElementById("output").innerHTML = displayText;
+	console.log("trying combinations...")
+	optimizer.setCombinations()
+	if (0 == optimizer.combinations.length)
+	{	displayText += "Not a single combination of these groups is possible! "
+		combinationPossible = false
+	}
+	else // try valid combinations
+	{
 
-progressText += "select combinations... <br>\n"
-document.getElementById("progress_message").innerHTML = progressText;
-
-if (! optimizer.selectBestCombinations())
-{	displayText += "<br> --- I could not find a good solution ! --- "
+		displayText += "<br>number of valid combinations : "+ optimizer.combinations.length
+		combinationPossible = true
+	}
+	document.getElementById("output").innerHTML = displayText;
+	document.getElementById("progress_message").innerHTML = "Combinations have been tried.";
+	return combinationPossible
 }
-displayText += "<br> Some selected combinations are <br> \n $$";
-var i = 0;
-for (i=0; i<8 && i<optimizer.selection.length; i++)
+
+function findCombinationsByIP() 
 {
-	// displayText +=  optimizer.selectedToTex(i)
-	displayText +=  optimizer.calculationTeX(i,false)
-}
-if (i<optimizer.selection.length  )
-{	// displayText +=  " .... "
-}
-displayText += " $$ <br>";
-displayText += "Everyone should have a chance of "+nPlaces+" / "+optimizer.nCandidates+" = "+optimizer.pAim +"<br>"
-displayText += "<br> I recommend the following probabilities for each combination:";
+   if (!checkNumbers()) {return;	}
+   if (!setCombinations()) {return;	}
 
-document.getElementById("output").innerHTML = displayText;
+	if (! optimizer.selectBestCombinations())
+	{	displayText += "<br> --- I could not find a good solution ! --- "
+	}
+	displayText += "<br> Some selected combinations are <br> \n $$";
+	var i = 0;
+	for (i=0; i<8 && i<optimizer.selection.length; i++)
+	{
+		// displayText +=  optimizer.selectedToTex(i)
+		displayText +=  optimizer.calculationTeX(i,false)
+	}
+	if (i<optimizer.selection.length  )
+	{	// displayText +=  " .... "
+	}
+	displayText += " $$ <br>";
+	displayText += "Everyone should have a chance of "+nPlaces+" / "+optimizer.nCandidates+" = "+optimizer.pAim +"<br>"
+	displayText += "<br> I recommend the following probabilities for each combination:";
 
-let comb = optimizer.selectionString(optimizer.selection,"\r\n")
-console.log(comb["combinations"])
-console.log(comb["calculations"])
-displayText += "<br>  "+optimizer.resultsTable(5)
-displayText += "<br> Quality of the results:";
+	document.getElementById("output").innerHTML = displayText;
 
-displayText += "<br>  "+optimizer.chancesTable(3)
-document.getElementById("progress_message").innerHTML ="ready.";
+	let comb = optimizer.selectionString(optimizer.selection,"\r\n")
+	console.log(comb["combinations"])
+	console.log(comb["calculations"])
+	displayText += "<br>  "+optimizer.resultsTable(5)
+	displayText += "<br> Quality of the results:";
 
-document.getElementById("output").innerHTML = displayText;
-// Tell MathJax to process the new content
+	displayText += "<br>  "+optimizer.chancesTable(3)
+	document.getElementById("progress_message").innerHTML ="ready.";
 
-document.getElementById("csvDownload1").removeAttribute("hidden");
-document.getElementById("csvDownload2").removeAttribute("hidden");
-  MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById("output")]);
+	document.getElementById("output").innerHTML = displayText;
+	// Tell MathJax to process the new content
 
-} // try valid combinations
-} // more candidates than places
-} // findCombinations() 
+	document.getElementById("csvDownload1").removeAttribute("hidden");
+	document.getElementById("csvDownload2").removeAttribute("hidden");
+	  MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById("output")]);
+} 
 </script>
 
 </body>
