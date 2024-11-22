@@ -1,17 +1,9 @@
 Things left to do....
 =====================
+- decide wheter selectFirstCombination is needed in selectBestCombinations
 
-- interface: web-form for input of groups
-(text field, + and - buttons)
-
-- display the probabilities! (+ calculation?)
-
+- decide which value this.p should obtain after selectFirstCombination():
+	[] or [1] or the best Least Squares value
+ 
 - possibility to select combinations by hand?
-
-- improve lay-out: integrate deviations in the table
-
-- in selectBestCombinations:
-  only add a vector if the inner product is more than ....
-  (otherwise, the matrix becomes nearly singular)
-
 

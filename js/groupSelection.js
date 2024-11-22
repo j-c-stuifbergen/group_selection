@@ -244,12 +244,13 @@ groups.prototype.selectBestCombinations = function(epsilon = 1e-6)
 
 	pIndividu = Array(this.groupSizes.length).fill(0)
 
-	this.selectFirstCombination()
-
+	this.selection = []
+	this.p = []		
+	
+	this.selectFirstCombination() // perhaps not necessary?
+//	this.p = [1] //otherwise, pIndividu will remain fill(0) 
 	while (true)
 	{	 
-		this.p = leastSquaresForDiagonalIP(
-			this.probabilityMatrix(), aimVector, this.nIndividuals )
 		pIndividu.fill(0)
 		for (let i=0; i<this.p.length ; i++)	
 		{	pIndividu = pIndividu.add(
@@ -273,6 +274,8 @@ groups.prototype.selectBestCombinations = function(epsilon = 1e-6)
 		else
 		{	break
 		}
+		this.p = leastSquaresForDiagonalIP(
+			this.probabilityMatrix(), aimVector, this.nIndividuals )
 	}
 			
 	return this.makeDistribution() && (penalty < epsilon)

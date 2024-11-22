@@ -33,6 +33,12 @@ nGroups = [50,15,6,3,2,1,1,2,1]
 
 groupSizes =[1,2,3,4,5,7,12]
 nGroups = [60,21,4,3,2,1,1]
+
+// problematic:
+nPlaces = 20;
+groupSizes =[1,2,3,4,5,8]
+nGroups = [2,4,3,1,3,1]
+
 // nGroups = [30,21,4,3,2,1,1]
 
 /* no solution is possible 
@@ -46,7 +52,11 @@ nGroups = [60,1,1]
 //nIndividuals = 40;
 
 // create possible combinations
-optimizer = new groups(nPlaces,groupSizes,nGroups)
+groupData = []
+for(i=0; i<groupSizes.length; i++)
+{	groupData.push({groupSize:groupSizes[i], nGroups:nGroups[i]})
+}
+optimizer = new groups(nPlaces,groupData)
 
 displayText += "The group distribution is: <br> \n $$" 
                 + optimizer.calculationGroupsString() + "$$ <br>\n"
