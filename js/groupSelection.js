@@ -453,8 +453,10 @@ groups.prototype.selectAllCombinations = function()
 
 groups.prototype.setCombinations = function()
 {
+	console.log('-----------setCombinations----------------------')
 	const recursivePart = (nPlaces, nGroupsIn) =>
 	{
+		console.log('recursivePart nplaces = '+nPlaces+" ngroupsIn = "+nGroupsIn)
 		var nGroups = []
 		for(let i=0;i<nGroupsIn.length;i++)
 		{	nGroups.push(nGroupsIn[i])
@@ -464,10 +466,13 @@ groups.prototype.setCombinations = function()
 		{
 			if ( max*this.groupSizes[0] < nPlaces)
 			{	// cannot fill all places
+				console.log('cannot fill')
 				return []
 			}
 			if (0==nPlaces%this.groupSizes[0])
-			{	return [[nPlaces/this.groupSizes[0]]]
+			{
+				console.log('vulling: '+[nPlaces/this.groupSizes[0]])
+				return [[nPlaces/this.groupSizes[0]]]
 			}
 			// cannot fill all places without splitting a group
 			return []
@@ -477,7 +482,7 @@ groups.prototype.setCombinations = function()
 			
 		for (let i = 0; i<=max; i++)
 		{	nLeft = nPlaces - i*this.groupSizes[nGroups.length]
-			if (0<nLeft)
+			if (0<=nLeft)
 			{
 				subset = recursivePart(nLeft, nGroups)
 				for (let j=0;j<subset.length;j++)
