@@ -187,21 +187,6 @@ groups.prototype.selectFirstCombination = function()
 	}
 }
 
-groups.prototype.selectBestCombinationsOld = function()
-{	this.selection = [0]
-	penalty = this.penalty(this.probabilities[0])
-
-	for(let i = 1; i<this.combinations.length ; i++)
-	{	newPenalty = this.penalty(this.probabilities[i])
-		if (newPenalty < penalty)
-		{	penalty = newPenalty
-			// this.selection[0] = i
-			// add the index at the beginning, leave old results
-			this.selection.splice(0,0,i) 
-		}
-	}
-}
-
 groups.prototype.selectNSimilarCombinations = function(N = 6)
 // this function tends to select combinations that are too similar.
 {	this.selection = [0]
@@ -328,6 +313,7 @@ groups.prototype.initialWeights = function()
 groups.prototype.improveWeights = function(nIterations, stepFactor = 1.001, htmlId = null)
 // at each iteration, adaptfactor will be multiplied by stepfactor
 {
+	let validity = true
 	if (null == this.p)
 	{	this.p = this.initialWeights()
 	}
@@ -348,28 +334,25 @@ groups.prototype.improveWeights = function(nIterations, stepFactor = 1.001, html
 		}
 		message = "iteration "+k+", the norm of the derivative is "+Math.sqrt(q2) +"<br>\n"
 		var pTotal = 0
+		
+		validity = true
 		for (let i = 0; i< this.selection.length ; i++)
 		{	this.p[i]+=(q[i])*adaptFactor
 			
 			// correct for overshoot
 			if (this.p[i]<0)
 			{	this.p[i]=0
+				validity = false
 			}
 			pTotal+=this.p[i]
 		}
-		// message += "coeff : "+this.p
-		console.log(message)
-		if (null != htmlId)
-		{	document.getElementById(htmlId).innerHTML = message
-		}
 		for (let i = 0; i< this.selection.length ; i++)
 		{	
-			// this.p[i]=this.p[i]/pTotal
+			this.p[i]=this.p[i]/pTotal
 		}
-		// p = this.makePdistribution(p)
 		adaptFactor *= stepFactor
 	}
-	return this.p
+	return validity
 }
 
 groups.prototype.improveWeightsOud = function(nIterations, stepFactor = 1.001)
@@ -453,10 +436,8 @@ groups.prototype.selectAllCombinations = function()
 
 groups.prototype.setCombinations = function()
 {
-	console.log('-----------setCombinations----------------------')
 	const recursivePart = (nPlaces, nGroupsIn) =>
 	{
-		console.log('recursivePart nplaces = '+nPlaces+" ngroupsIn = "+nGroupsIn)
 		var nGroups = []
 		for(let i=0;i<nGroupsIn.length;i++)
 		{	nGroups.push(nGroupsIn[i])
@@ -471,7 +452,6 @@ groups.prototype.setCombinations = function()
 			}
 			if (0==nPlaces%this.groupSizes[0])
 			{
-				console.log('vulling: '+[nPlaces/this.groupSizes[0]])
 				return [[nPlaces/this.groupSizes[0]]]
 			}
 			// cannot fill all places without splitting a group
