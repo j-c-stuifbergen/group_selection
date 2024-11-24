@@ -22,7 +22,6 @@ function shuffle(array)
 
     // Pick a remaining element...
     let randomIndex = Math.floor(Math.random() * currentIndex);
-//	console.log("randomIndex = "+ randomIndex)
     currentIndex--;
 
     // And swap it with the current element.
@@ -56,6 +55,7 @@ function groups(nPlaces, groupInfo) // groupSizes, nGroups)
 	this.combinations = [] // an array of combinations that fill all places
 	this.probabilities = [] // same dimensions as this.combinations. 
 	this.selection = [] // can contain indices that refer to this.combinations
+	this.availabel = [] // the indices that are not in selection
 	this.p = [] // weights, belonging to the selection.
 	this.setIndividuals() // also fills this.nCandidates
 	this.pAim = this.nPlaces/this.nCandidates; // also fills this.nCandidates
@@ -164,27 +164,7 @@ groups.prototype.penalty = function(combi)
 groups.prototype.innerProd = function(prob1, prob2)
 // inner product , weighted by Groupsizes*nGroups
 {	
-/*	console.log("nindividuals is "+ this.nIndividuals)
-	console.log("prob1 is "+ prob1)
-	console.log("prob2 is "+ prob2)
-	console.log("nindividuals is "+ this.nIndividuals.length)
-	console.log("prob1 is "+ prob1.length)
-	console.log("prob2 is "+ prob2.length)
-*/
 	return innerProductForDiagonalIP(prob1, prob2, this.nIndividuals)
-}
-
-groups.prototype.selectFirstCombination = function()
-{	this.selection = [0]
-	penalty = this.penalty(this.probabilities[0])
-
-	for(let i = 1; i<this.combinations.length ; i++)
-	{	newPenalty = this.penalty(this.probabilities[i])
-		if (newPenalty < penalty)
-		{	penalty = newPenalty
-			this.selection[0] = i
-		}
-	}
 }
 
 groups.prototype.selectNSimilarCombinations = function(N = 6)
@@ -230,13 +210,15 @@ groups.prototype.selectBestCombinations = function(epsilon = 1e-6)
 	pIndividu = Array(this.groupSizes.length).fill(0)
 
 	this.selection = []
+	this.availabel = Array.from(Array(this.combinations.length).keys())
 	this.p = []		
 	
-	this.selectFirstCombination() // perhaps not necessary?
+	if (true)  // perhaps not necessary?
+	{ this.selectLowestPenalty(true) 
 	// perform projection, so the inner product with pDiff will be 0
 	this.p = leastSquaresForDiagonalIP(
 		this.probabilityMatrix(), aimVector, this.nIndividuals )
-	
+	}
 	while (true)
 	{	 
 		pIndividu.fill(0)
@@ -259,33 +241,68 @@ groups.prototype.selectBestCombinations = function(epsilon = 1e-6)
 			break
 		}
 
-		ipResult = this.selectByIP(pDiff)
+		ipResult = this.selectByIP(pDiff, true)
+		if (ipResult.index < 0)
+		{	// no vector has been found
+			break
+		}
 		if (epsilon < ipResult.product )
-		{	this.selection.push(ipResult.index)
-			this.p = leastSquaresForDiagonalIP(
+		{	this.p = leastSquaresForDiagonalIP(
 				this.probabilityMatrix(), aimVector, this.nIndividuals )
 		}
 		else
 		{	// The new vector doesn't contribute significantly
+			this.p.push(0)
 			break
 		}
 	}
-			
-	return this.makeDistribution() && (penalty < epsilon)
+	let noNegatives = this.makeDistribution() 		
+	return noNegatives && (penalty < epsilon)
 }
 
-groups.prototype.selectByIP = function(goalVector)
-{		 
-	bestIndex = 0; biggestIP = 0
-	let i = 0;
-	for (; i<this.combinations.length ; i++)
-	{	ip = this.innerProd(goalVector, this.probabilities[i])
-		if (biggestIP < ip)
-		{	biggestIP = ip
-			bestIndex = i
+groups.prototype.selectLowestPenalty = function(update = false )
+{	
+	if (0 == this.availabel.length)
+	{	return { penalty: null, index:-1}
+	}
+
+	penalty = this.penalty(this.probabilities[this.availabel[0]])
+	indexOfLowestPenalty = this.availabel[0];  
+	var foundAt
+
+	for(let i = 1; i<this.availabel.length ; i++)
+	{	newPenalty = this.penalty(this.probabilities[this.availabel[i]])
+		if (newPenalty < penalty)
+		{	penalty = newPenalty
+			indexOfLowestPenalty =this.availabel[i] 
+			foundAt = i
 		}
 	}
-	return {product: biggestIP, index:bestIndex}
+	if (update && ( 0 <= indexOfLowestPenalty))
+	{	this.selection = [indexOfLowestPenalty]
+		this.availabel.splice(foundAt,1)
+	}
+	return {penalty: penalty, index: indexOfLowestPenalty}
+}
+
+groups.prototype.selectByIP = function(goalVector, update = false)
+{		 
+	indexOfBestCombination = -1; // 
+	biggestIP = 0 ;
+
+	for (let i=0; i<this.availabel.length ; i++)
+	{	ip = this.innerProd(goalVector, this.probabilities[this.availabel[i]])
+		if (biggestIP < ip)
+		{	biggestIP = ip
+			indexOfBestCombination = this.availabel[i]
+			foundAt     = i
+		}
+	}
+	if (update && ( 0 <= indexOfBestCombination))
+	{	this.selection.push(indexOfBestCombination)
+		this.availabel.splice(foundAt, 1)
+	}
+	return {product: biggestIP, index:indexOfBestCombination}
 }
 
 groups.prototype.solveLeastSquares = function(aimVector)
@@ -447,7 +464,6 @@ groups.prototype.setCombinations = function()
 		{
 			if ( max*this.groupSizes[0] < nPlaces)
 			{	// cannot fill all places
-				console.log('cannot fill')
 				return []
 			}
 			if (0==nPlaces%this.groupSizes[0])

@@ -201,6 +201,24 @@ When you enter a group size, it will be added below.<br>
    }
 
 
+function findCombinationsByIP() 
+{
+   if (!checkNumbers()) {return;	}
+   if (!setCombinations()) {return;	}
+   selectCombinations()
+   showQuality()
+   MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById("output")]);
+
+}
+function findCombinationsByIteration() 
+{
+   if (!checkNumbers()) {return;	}
+   if (!setCombinations()) {return;	}
+   optimizer.initialWeights()
+   optimizer.improveWeights(99)
+   showQuality()
+   MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById("output")]);
+}
   function checkNumbers() {
     if (checkNPlaces())
     {   nPlaces = parseInt(nPlacesInput.value, 10);
@@ -268,16 +286,6 @@ function setCombinations()
 	return combinationPossible
 }
 
-function findCombinationsByIP() 
-{
-   if (!checkNumbers()) {return;	}
-   if (!setCombinations()) {return;	}
-   selectCombinations()
-   showQuality()
-   MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById("output")]);
-
-}
-
 function selectCombinations() 
 {
 
@@ -300,11 +308,12 @@ function selectCombinations()
 	document.getElementById("output").innerHTML = displayText;
 
 	let comb = optimizer.selectionString(optimizer.selection,"\r\n")
+	console.log("combinations:")
 	console.log(comb["combinations"])
 	console.log(comb["calculations"])
 	displayText += "<br>  "+optimizer.resultsTable(5)
-
 }
+
 function showQuality() 
 {
 	displayText += "<br> Quality of the results:";
@@ -318,15 +327,6 @@ function showQuality()
 	document.getElementById("csvDownload1").removeAttribute("hidden");
 	document.getElementById("csvDownload2").removeAttribute("hidden");
 } 
-function findCombinationsByIteration() 
-{
-   if (!checkNumbers()) {return;	}
-   if (!setCombinations()) {return;	}
-   optimizer.initialWeights()
-   optimizer.improveWeights(99)
-   showQuality()
-   MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById("output")]);
-}
 
 </script>
 

@@ -7,3 +7,7 @@ Things left to do....
  
 - possibility to select combinations by hand?
 
+- make improveWeights more efficient, for exampel:
+  - when the derivatives are known, find the direction of maximum descent?
+  - for each weight, find the value that minimizes the distance
+  -
