@@ -131,6 +131,34 @@ groups.prototype.diff2 = function(v1, v2)
 	}
 	return result
 }
+groups.prototype.ddxy = function()
+// calculate the second derivative of this.penalty()
+{
+/*
+	// definitions
+	// nIndividuals[i] = nGroups[i]*groupSizes[i] 
+	// q[n][i] = v[n] [i] / nGroups[i] 
+	// p = sum_n (  q[n]  w[n])
+	// f = SUM_i (   ( p[i] - a[i] )^2  * nIndividuals[i])
+	
+	condition
+	// sum_n (w[n]) = 1
+	
+	 first derivatives
+	// dp[i] / dw[k] = q[k][i]
+	// df / dp[i] = 2 (p[i]-a[i]) * nIndividuals[i]
+			= 2 sum_n (  w[k] (q[k][i] - a[i]) ) *nIndividuals[i]
+	// df / dw[n] = sum_i ( df / dp[i] * dp[i]/dw[n] )
+		= sum_i ( (2 sum_k (  w[k] (q[k][i] - a[i]) ) *nIndividuals[i])
+		  * q[n][i] )
+	// d df / dw[n] dw[m] = sum_i ( (2 sum_n (  w[n] (q[n][i] - a[i]) ) *nIndividuals[i])
+		  * q[n][i] )
+	
+*/	
+	
+	
+	
+}
 
 groups.prototype.derivative = function()
 {	var q = []; // used to adapt p, store deviations from desired probabilities
