@@ -1,4 +1,4 @@
-// requires
+f// requires
 // <script src="./js/matrix.js"></script>
 
 function download(filename, text) {
@@ -124,63 +124,55 @@ groups.prototype.parabolaMin = function(fie, x=1.0)
 	return c1 / (-2.0*c2)
 }
 
-groups.prototype.diff2 = function(v1, v2)
-{	result = 0
-	for( let i = 0; i<this.groupSizes.length; i++)
-	{	result += Math.pow(v1[i]-v2[i], 2) * groupSizes[i]
-	}
-	return result
-}
-groups.prototype.ddxy = function()
-// calculate the second derivative of this.penalty()
-{
+
 /*
 	// definitions
 	// nIndividuals[i] = nGroups[i]*groupSizes[i] 
 	// q[n][i] = v[n] [i] / nGroups[i] 
-	// p = sum_n (  q[n]  w[n])
-	// f = SUM_i (   ( p[i] - a[i] )^2  * nIndividuals[i])
-	
-	condition
-	// sum_n (w[n]) = 1
+	// p[i] = sum_k  w[k] q[k][i]  
+	// f = sum_j    ( p[j] - a[j] )^2  * nIndividuals[j]
 	
 	 first derivatives
 	// dp[i] / dw[k] = q[k][i]
 	// df / dp[i] = 2 (p[i]-a[i]) * nIndividuals[i]
-			= 2 sum_n (  w[k] (q[k][i] - a[i]) ) *nIndividuals[i]
+			= 2 ( sum_k  w[k] q[k][i]  - a[i] ) *nIndividuals[i]
 	// df / dw[n] = sum_i ( df / dp[i] * dp[i]/dw[n] )
-		= sum_i ( (2 sum_k (  w[k] (q[k][i] - a[i]) ) *nIndividuals[i])
+		= sum_i ( 2  (sum_k  w[k] q[k][i] - a[i] ) *nIndividuals[i]
 		  * q[n][i] )
-	// d df / dw[n] dw[m] = sum_i ( (2 sum_n (  w[n] (q[n][i] - a[i]) ) *nIndividuals[i])
+     	// if 0 == df / dw[n] then for every n:
+      	sum_i (sum_k w[k] q[k][i] * q[n][i] * nIndividuals[i] = sum_i a[i] * q[n][i] * nIndividuals[i]
+       This is a matrix equation for w:
+       Q w = b
+       Q[k,n] = < q[k], q[n] > (inner product defined by nIndividuals[])
+       b[n]   = < a   , q[n] >
+       
+	// d df / dw[n] dw[m] = sum_i ( 2   q[m][i]   *nIndividuals[i]
 		  * q[n][i] )
-	
+	// 
 */	
-	
-	
-	
-}
-
-groups.prototype.derivative = function()
-{	var q = []; // used to adapt p, store deviations from desired probabilities
-	// calculate probabilities per individual 
-	let a = this.pIndividuals()
-	console.log("kansen: "+ a)
-
-	// calculate difference from desired probability
-	for (let i = 0; i< this.selection.length ; i++)
-	{	q[i]=0;
-		for (let j = 0; j<this.groupSizes.length; j++)
-		{
-		  // give extra weight if a deviation affects more persons
-		  q[i]+=(this.pAim - a[j])*this.combinations[this.selection[i]][j]*this.groupSizes[j];
-		  // don't make chances negative
-		  if (q[i] < 0 && 0 ===this.p[i])
-		  {	q[i] = 0
-		  }
-		}
+groups.prototype.findMinimum()
+/* find coefficients that minimize the difference between realized and aimed probabilities,
+without requiring that the probabilities will add up to 1
+Note: such a minimum always exists.
+/* This is a matrix equation for the weights:
+       Q p= b
+       Q[k,n] = < q[k], q[n] > (inner product defined by nIndividuals[])
+       b[n]   = < a   , q[n] >
+ Note that the matrix can be singular.   
+*/
+{	b = Array(this.selection.length)
+	Q=Array(this.selection.length).fill(Array(this.selection.length))
+	for (let n=0; n< this.selection.length ; n++)
+	{	b[n] = this.innerProduct (this.indivProba, this.combinations[this.selection[n]])
+	 	for(k=n; k<this.selection.length; k++)
+			{	Q[k][n] = this.innerProduct (this.combinations[this.selection[k]], 
+							     	this.combinations[this.selection[n]])
+			        Q[n][k] = Q[k][n]
+			}
 	}
-	return q
+	this.p = solveMatrixEquation(Q,b)
 }
+
 groups.prototype.penalty = function(combi)
 {	var result = 0
 	for(let i = 0 ; i < this.groupSizes.length ; i++)
@@ -189,6 +181,33 @@ groups.prototype.penalty = function(combi)
 	}
 	return result
 }
+
+groups.prototype.derivative = function()
+/*	// df / dw[n] = sum_i ( df / dp[i] * dp[i]/dw[n] )
+		= sum_i ( 2  (sum_k  w[k] q[k][i] - a[i] ) *nIndividuals[i]
+		  * q[n][i] )
+*/
+{	var q = []; // used to adapt p, store deviations from desired probabilities
+	// calculate probabilities per individual 
+	let p = this.pIndividuals() // p[i] = sum_k (  w[k] q[k][i])
+	console.log("kansen: "+ p)
+
+	// calculate difference from desired probability
+	for (let i = 0; i< this.selection.length ; i++)
+	{	q[i]=0;
+		for (let j = 0; j<this.groupSizes.length; j++)
+		{
+		  // give extra weight if a deviation affects more persons
+		  q[i]+=2 * (this.pAim - p[j])*this.combinations[this.selection[i]][j]*this.groupSizes[j];
+		  // don't make chances negative
+		  if (q[i] < 0 && 0 ===this.p[i])
+		  {	q[i] = 0
+		  }
+		}
+	}
+	return q
+}
+
 groups.prototype.innerProd = function(prob1, prob2)
 // inner product , weighted by Groupsizes*nGroups
 {	
@@ -463,7 +482,7 @@ groups.prototype.probabilityArray= function()
 groups.prototype.pIndividuals = function()
 {	// p contains the probability of vectors in de selection
 	var e = [];// expected number of groups that will have a place
-	this.indivProba = []; // a[j]=e[j]/nGroups[j]; probability that a member of these groups will have a place
+	this.indivProba = []; // p[j]=e[j]/nGroups[j]; probability that a member of these groups will have a place
 	for (let j = 0; j<this.groupSizes.length; j++)
 	{
 		e[j] = 0; // expected number of groups of groupSize[j]
