@@ -1,5 +1,31 @@
+Array.prototype.indexOfMaxAbs = function(minPosition=0, upperPosition=null) {
+
+    if (null == upperPosition) {
+		upperPosition = this.length
+	}
+
+	if (this.length <= minPosition) {
+        return -1;
+    }
+	if (this.length < upperPosition) {
+        return -2;
+    }
+	
+    var max = this[minPosition];
+    var maxIndex = minPosition;
+
+    for (var i = minPosition +1; (i < this.length) && (i<upperPosition); i++) {
+        if ( max < Math.abs(this[i])) {
+            maxIndex = i;
+            max = this[i];
+        }
+    }
+
+    return maxIndex;
+}
+
 Array.prototype.timesScalar = function(scalar)
-{	result = new Array(this.length)
+{	var result = new Array(this.length)
 	for(let i = 0; i<this.length ; i++)
 	{	result[i] = this[i]*scalar
 	}
@@ -7,7 +33,7 @@ Array.prototype.timesScalar = function(scalar)
 }
 Array.prototype.add = function(vector)
 {	
-	result = new Array(this.length)
+	var result = new Array(this.length)
 	if (this.length != vector.length)
 	{	throw ("addition of vectors of different length")
 	}
@@ -18,7 +44,7 @@ Array.prototype.add = function(vector)
 }
 Array.prototype.subtract = function(vector)
 {
-	result = new Array(this.length)
+	var result = new Array(this.length)
 	if (this.length != vector.length)
 	{	throw ("addition of vectors of different length")
 	}
@@ -27,6 +53,119 @@ Array.prototype.subtract = function(vector)
 	}
 	return result
 }
+Array.prototype.inner = function(vector)
+{
+	result = 0
+	if (this.length != vector.length)
+	{	throw ("inner product of vectors of different length")
+	}
+	for (i = 0; i< this.length; i++)
+	{	result += this[i] * vector[i]
+	}
+	return result
+}
+Array.prototype.multiplyByMatrix = function(M)
+{
+	var result = Array(M.length)
+	for (let i = 0; i< M.length ; i++)
+	{	result[i] = M[i].inner(this)
+	}
+	return result
+}
+
+function findMaxAbsElement(Matrix, minRow = 0, upperRow =null, minCol = 0, upperCol = null)
+{
+	if (null == upperRow)
+	{	upperRow = Matrix.length
+	}
+	let nRows = Matrix.length
+	let nCols = 0
+	let max = 0
+	if (0<nRows)
+	{	nCols = Matrix[0].length
+	    if ( 0 < nCols)
+		max = Matrix[0][0]
+	}
+
+	rowIndex = minRow
+	colIndex = minRow
+	for ( i = minRow; i<upperRow ; i++)
+	{
+		if (Matrix[i].length < upperCol)
+		{	throw ("inconsistent Row lengths")
+			return
+		}
+		highestInRow = Matrix[i].indexOfMaxAbs(minCol, upperCol)
+		if ( max < Matrix[i][highestInRow])
+		{	max = Matrix[i][highestInRow]
+		    colIndex = highestInRow
+			rowIndex = i
+		}
+	}	
+	
+	return { rowIndex: rowIndex , columnIndex: colIndex}	
+}
+
+// Function to solve a square matrix equation A * X = B
+function solveMatrixEquationWithFullPivoting(A, B) {
+  const n = A.length;
+  let permutations = Array.from(Array(n).keys())
+  // Augment matrix A with column vector B
+  let augmentedMatrix = A.map((row, i) => [...row, B[i]]);
+  
+  // Forward elimination with partial pivoting
+  for (let col = 0; col < n; col++) {
+    // find the pivot element
+	let pivotOrdinates = findMaxAbsElement(A, col, n, col, n)
+	let pivotRow = pivotOrdinates.rowIndex
+	let pivotColumn = pivotOrdinates.columnIndex
+	
+    // Swap the current row with the pivot row (this doesn't change the solution)
+    if (pivotRow !== col) {
+      let temp = augmentedMatrix[col];
+      augmentedMatrix[col] = augmentedMatrix[pivotRow];
+      augmentedMatrix[pivotRow] = temp;
+    }
+	if (pivotColumn !== col)
+	{	for (let i = 0; i<n ; i++)
+		{	temp = augmentedMatrix[i][col]
+			augmentedMatrix[i][col] = augmentedMatrix[i][pivotColumn]
+			augmentedMatrix[i][pivotColumn] = temp
+		}
+		// store the column permutations
+		{  let temp = permutations[ col] 
+			permutations[ col] = permutations[pivotColumn]
+			permutations[pivotColumn] = temp
+		}
+	}
+	
+    // Perform elimination to make all values below the pivot zero
+    for (let row = col + 1; row < n; row++) {
+      const factor = augmentedMatrix[row][col] / augmentedMatrix[col][col];
+      for (let j = col; j <= n; j++) {
+        augmentedMatrix[row][j] -= factor * augmentedMatrix[col][j];
+      }
+    }
+  }
+
+	console.log("na vegen: augmentedMatrix = "+augmentedMatrix)
+  // Back substitution
+  let X = new Array(n).fill(0);
+  for (let row = n - 1; row >= 0; row--) {
+    let sum = augmentedMatrix[row][n]; // Right-hand side of the equation
+    for (let col = row + 1; col < n; col++) {
+      sum -= augmentedMatrix[row][col] * X[col];
+    }
+    X[row] = sum / augmentedMatrix[row][row];
+  }
+  // correct for the permutation of the columns
+	result = Array(n)
+	for (i = 0; i<n ; i++)
+	{  result [permutations[i]] = X[i]
+	}
+  return result;
+}
+
 // Function to solve a matrix equation A * X = B
 function solveMatrixEquation(A, B) {
   const n = A.length;
@@ -73,21 +212,38 @@ function solveMatrixEquation(A, B) {
   return X;
 }
 
-function transpose(M)
+function dimensions(M, verify = true)
 {	// number of columns of the transpose
-	nCols = M.length // = number of rows of M
-	if (0 == nCols)
-	{	return []
+	nRows = M.length 
+	if (0 == nRows)
+	{	nColumns = 0
 	}
 	// else
-	nRows = M[0].length // = number of columns of M
-	for (col = 0; col < nCols; col++)
-	    {
-		if (M[col].length != nRows )
+	{ nColumns = M[0].length 
+	}
+	
+	if (verify)
+	{	for (row = 0; row < nRows; row++)
+	    {		
+		if (M[row].length != nColumns )
 		    {   throw ("inconsistent row length at row "+ row + "of M")
 			return 
 		    }
+		}
 	}
+	return {nRows: nRows, nColumns: nColumns}
+}
+
+function transpose(M)
+{
+	dim= dimensions(M, false)
+	nRows = dim.Columns // number of rows for result
+	nCols = dim.nRows // number of columns for result
+
+	if (0 == nRows)
+	{	return []
+	}
+	
 	result = Array(nRows)
 	for (row = 0; row < nRows ; row ++)
 	{
@@ -186,7 +342,7 @@ function diagonalMatrixProduct(diagonal, M2)
 
 function innerProduct(v1, v2, IPmetric)
 {
-	v1T = matrixproduct([v1],IPmetric)
+	v1T = matrixProduct([v1],IPmetric)
 	return matrixProduct([v2],v1T)[0][0]
 }
 
@@ -256,17 +412,48 @@ function leastSquaresForUnitIP(A, B, metricA = null) {
   // Step 3: Solve the normal equation (A^T * A) * X = A^T * B
   return solveMatrixEquation(ATA, ATB);
 }
-/*
+
 // Example usage
-const A = [
+let A = [
   [2, 1],
   [1, 3],
   [3, 2],
   [4, 1]
 ];
 
-const B = [5, 6, 7, 8];
+let B = [5, 6, 7, 8];
 
 const leastSquaresSolution = leastSquaresForUnitIP(A, B);
 console.log("Least Squares Solution:", leastSquaresSolution);
-*/
+
+// matrix designed for row and column pivoting
+A = [
+  [2, 4, 4, 7, 0],
+  [1, 6, 3, 2, 1],
+  [2, 9, 0, 1, 4],
+  [3, 2, 5, 0, 8],
+  [4, 1, 3, 3, 9]
+];
+B = [5, 6, 7, 8, 9];
+
+console.log("correct solution: "+solveMatrixEquation(A,B))
+X = solveMatrixEquationWithFullPivoting(A,B)
+console.log("experimental solution: "+X)
+console.log("controle: "+B+" = "+X.multiplyByMatrix(A))
+
+// now a singular matrix - with a possible solution
+A = [
+  [2, 4, 4, 7, 0],
+  [3, 2, 5, 0, 8],
+  [1, 6, 3, 2, 1],
+  [2, 9, 0, 1, 4],
+  [4, 8, 8, 2, 9],
+];
+B = [5, 6, 7, 8, 9].multiplyByMatrix(A)
+X = solveMatrixEquationWithFullPivoting(A,B)
+console.log("now a singular matrix: X ="+ X)
+console.log("controle: "+B+" = "+X.multiplyByMatrix(A))
+
+;
+
+/**/
