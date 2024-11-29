@@ -27,8 +27,8 @@ When you enter a group size, it will be added below.<br>
 <h3>groups</h3>
 <div id="numberBoxes"></div>
 <button type="button" id="findCombinationsByIP" onclick="findCombinationsByIP()" hidden>try quick solution</button>
-<div id="numberBoxes"></div>
 <button type="button" id="findCombinationsByIteration" onclick="findCombinationsByIteration()" hidden>try every solution</button>
+<button type="button" id="testExistence" onclick="testExistence()" hidden>(experimental) test the existence of a solution</button>
 
 <h3>Results</h3>
 <button id="csvDownload1" onclick="download('groups.csv', optimizer.resultCsv())" hidden >Export results to csv file</button>
@@ -139,6 +139,7 @@ When you enter a group size, it will be added below.<br>
     // show the findCombinations button
     document.getElementById('findCombinationsByIP').removeAttribute("hidden")
     document.getElementById('findCombinationsByIteration').removeAttribute("hidden")
+    document.getElementById('testExistence').removeAttribute("hidden")
 
     // keep sorted by groupSize
     for (i=storedData.length -2; 0<= i ; i--)
@@ -176,7 +177,7 @@ When you enter a group size, it will be added below.<br>
 	if (0===storedData.length)
 	{     document.getElementById('findCombinationsByIP').setAttribute("hidden", 'hidden')
 	document.getElementById('findCombinationsByIteration').setAttribute("hidden", 'hidden')
-
+	document.getElementById('testExistence').setAttribute("hidden", 'hidden')
 	}
     } else {
 	updateText(data)
@@ -219,6 +220,17 @@ function findCombinationsByIteration()
    showQuality()
    MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById("output")]);
 }
+function testExistence() 
+{
+   if (!checkNumbers()) {return;	}
+   if (!setCombinations()) {return;	}
+   optimizer.setProbabilities() // the probabilities for groups in a combination
+   optimizer.setIndividuals() // required for innerprod
+   optimizer.findMinimum()
+   showQuality()
+   MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById("output")]);
+}
+
   function checkNumbers() {
     if (checkNPlaces())
     {   nPlaces = parseInt(nPlacesInput.value, 10);
