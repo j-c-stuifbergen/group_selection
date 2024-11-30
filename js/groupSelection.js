@@ -168,14 +168,9 @@ Note: such a minimum always exists.
 	 	for(var k=n; k<this.selection.length; k++)
 			{	Q[k][n] = this.innerProd (this.combinations[this.selection[k]], 
 							     	this.combinations[this.selection[n]])
-				console.log(" n = "+n+", k = "+k)
-				console.log("Q = "+Q)
-			        Q[n][k] = Q[k][n]
-				console.log("Q = "+Q)
+				Q[n][k] = Q[k][n]
 			}
 	}
-	console.log("Q is \n"+Q)
-	console.log("b is \n"+b)
 
 	this.p = solveMatrixEquation(Q,b)
 	console.log("solution is is \n"+this.p)

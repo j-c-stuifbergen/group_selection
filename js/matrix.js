@@ -404,6 +404,7 @@ let B = [5, 6, 7, 8];
 const leastSquaresSolution = leastSquaresForUnitIP(A, B);
 console.log("Least Squares Solution:", leastSquaresSolution);
 
+/*
 // matrix designed for row and column pivoting
 A = [
   [2, 4, 4, 7, 0],
@@ -434,4 +435,4 @@ console.log("controle: "+B+" = "+X.multiplyByMatrix(A))
 
 ;
 
-/**/
+*/
