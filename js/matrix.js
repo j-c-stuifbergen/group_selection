@@ -20,7 +20,6 @@ Array.prototype.indexOfMaxAbs = function(minPosition=0, upperPosition=null) {
             max = this[i];
         }
     }
-
     return maxIndex;
 }
 
@@ -78,37 +77,41 @@ function findMaxAbsElement(Matrix, minRow = 0, upperRow =null, minCol = 0, upper
 	if (null == upperRow)
 	{	upperRow = Matrix.length
 	}
-	let nRows = Matrix.length
-	let nCols = 0
-	let max = 0
-	if (0<nRows)
-	{	nCols = Matrix[0].length
-	    if ( 0 < nCols)
-		max = Matrix[0][0]
+	if (Matrix.length < upperRow)
+	{	throw ("row limit is too big for the matrix.")
+	}
+	// else
+	if (null == upperCol)
+	{
+		upperCol = Matrix[0].length
 	}
 
+	let maxFound = 0
 	rowIndex = minRow
 	colIndex = minRow
-	for ( i = minRow; i<upperRow ; i++)
+	for ( let i = minRow; i<upperRow ; i++)
 	{
 		if (Matrix[i].length < upperCol)
 		{	throw ("inconsistent Row lengths")
 			return
 		}
 		highestInRow = Matrix[i].indexOfMaxAbs(minCol, upperCol)
-		if ( max < Matrix[i][highestInRow])
-		{	max = Matrix[i][highestInRow]
+		if ( maxFound < Matrix[i][highestInRow])
+		{	maxFound = Matrix[i][highestInRow]
 		    colIndex = highestInRow
 			rowIndex = i
 		}
 	}	
-	
 	return { rowIndex: rowIndex , columnIndex: colIndex}	
 }
 
 // Function to solve a square matrix equation A * X = B
-function solveMatrixEquationWithFullPivoting(A, B) {
+function solveMatrixEquation(A, B, epsilon = 1e-12, margin =5)
+// epsilon should depend on the machine precision, and perhaps on the norm of the matrix.
+// margin should depend on the norms of the vector and of the matrix.
+ {
   const n = A.length;
+  var debugText = "The matrix was non-singular, no entries have been removed"
   let permutations = Array.from(Array(n).keys())
   // Augment matrix A with column vector B
   let augmentedMatrix = A.map((row, i) => [...row, B[i]]);
@@ -116,10 +119,9 @@ function solveMatrixEquationWithFullPivoting(A, B) {
   // Forward elimination with partial pivoting
   for (let col = 0; col < n; col++) {
     // find the pivot element
-	let pivotOrdinates = findMaxAbsElement(A, col, n, col, n)
+	let pivotOrdinates = findMaxAbsElement(augmentedMatrix, col, n, col, n)
 	let pivotRow = pivotOrdinates.rowIndex
 	let pivotColumn = pivotOrdinates.columnIndex
-	
     // Swap the current row with the pivot row (this doesn't change the solution)
     if (pivotRow !== col) {
       let temp = augmentedMatrix[col];
@@ -138,17 +140,33 @@ function solveMatrixEquationWithFullPivoting(A, B) {
 			permutations[pivotColumn] = temp
 		}
 	}
-	
-    // Perform elimination to make all values below the pivot zero
-    for (let row = col + 1; row < n; row++) {
-      const factor = augmentedMatrix[row][col] / augmentedMatrix[col][col];
-      for (let j = col; j <= n; j++) {
-        augmentedMatrix[row][j] -= factor * augmentedMatrix[col][j];
-      }
-    }
+	if (epsilon < Math.abs(augmentedMatrix[col][col]))
+	{
+	    // Perform elimination to make all values below the pivot zero
+	    for (let row = col + 1; row < n; row++) {
+	      const factor = augmentedMatrix[row][col] / augmentedMatrix[col][col];
+	      for (let j = col; j <= n; j++) {
+		augmentedMatrix[row][j] -= factor * augmentedMatrix[col][j];
+	      }
+	    }
+	}
+	else // all remaining elements are smaller than epsilon
+	{
+	    console.log("for this matrix of size "+A.length+", there are only "+col+" independent columns")
+	    // Perform elimination to make all values below the pivot zero
+	    for (let row = col ; row < n; row++) {
+	      for (let j = col; j <= n; j++) {
+		if (	augmentedMatrix[row][j] > epsilon * margin)
+		{	console.log("problem: matrix element ["+row+"]["+j+"] is "+augmentedMatrix[row][j]+ " > epsilon="+epsilon)
+			throw ("singular matrix, no solution")
+		}
+		augmentedMatrix[row][j] = 0;
+	      }
+	    }
+	    col = n // we can finish
+	}
   }
 
-	console.log("na vegen: augmentedMatrix = "+augmentedMatrix)
   // Back substitution
   let X = new Array(n).fill(0);
   for (let row = n - 1; row >= 0; row--) {
@@ -156,6 +174,7 @@ function solveMatrixEquationWithFullPivoting(A, B) {
     for (let col = row + 1; col < n; col++) {
       sum -= augmentedMatrix[row][col] * X[col];
     }
+    if ((0!=augmentedMatrix[row][row]) || (0!=sum))
     X[row] = sum / augmentedMatrix[row][row];
   }
   // correct for the permutation of the columns
@@ -163,11 +182,12 @@ function solveMatrixEquationWithFullPivoting(A, B) {
 	for (i = 0; i<n ; i++)
 	{  result [permutations[i]] = X[i]
 	}
+	// console.log("permutations is "+permutations)
   return result;
 }
 
 // Function to solve a matrix equation A * X = B
-function solveMatrixEquation(A, B) {
+function solveMatrixEquationWithPartialPivoting(A, B) {
   const n = A.length;
   
   // Augment matrix A with column vector B
@@ -288,9 +308,7 @@ function diagonalMatrixProduct(diagonal, M2)
 	}
 	// else
 	if (M2.length != nRows)	
-	    {   console.log("diagonal: "+diagonal)
-		console.log("M2: "+M2)
-		throw ("inconsistent number of rows of M2")
+	    {   throw ("inconsistent number of rows of M2: "+M2.length+". diagonal: "+diagonal.length)
 		return 
 	    }
 	nCols = M2[0].length
@@ -391,6 +409,7 @@ function leastSquaresForUnitIP(A, B, metricA = null) {
   return solveMatrixEquation(ATA, ATB);
 }
 
+/*
 // Example usage
 let A = [
   [2, 1],
@@ -401,10 +420,10 @@ let A = [
 
 let B = [5, 6, 7, 8];
 
-const leastSquaresSolution = leastSquaresForUnitIP(A, B);
-console.log("Least Squares Solution:", leastSquaresSolution);
+// const leastSquaresSolution = leastSquaresForUnitIP(A, B);
+// console.log("Least Squares Solution:", leastSquaresSolution);
 
-/*
+
 // matrix designed for row and column pivoting
 A = [
   [2, 4, 4, 7, 0],
@@ -415,8 +434,8 @@ A = [
 ];
 B = [5, 6, 7, 8, 9];
 
-console.log("correct solution: "+solveMatrixEquation(A,B))
-X = solveMatrixEquationWithFullPivoting(A,B)
+console.log("correct solution: "+solveMatrixEquationWithPartialPivoting(A,B))
+X = solveMatrixEquation(A,B)
 console.log("experimental solution: "+X)
 console.log("controle: "+B+" = "+X.multiplyByMatrix(A))
 
@@ -429,7 +448,7 @@ A = [
   [4, 8, 8, 2, 9],
 ];
 B = [5, 6, 7, 8, 9].multiplyByMatrix(A)
-X = solveMatrixEquationWithFullPivoting(A,B)
+X = solveMatrixEquation(A,B)
 console.log("now a singular matrix: X ="+ X)
 console.log("controle: "+B+" = "+X.multiplyByMatrix(A))
 

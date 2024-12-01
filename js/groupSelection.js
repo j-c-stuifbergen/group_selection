@@ -164,16 +164,21 @@ Note: such a minimum always exists.
 	var b = Array(this.selection.length)
 	var Q=Array(this.selection.length).fill(0).map(() => new Array(this.selection.length))
 	for (var n=0; n< this.selection.length ; n++)
-	{	b[n] = this.innerProd (aimVector, this.combinations[this.selection[n]])
+	{	b[n] = this.innerProd (aimVector, this.probabilities[this.selection[n]])
 	 	for(var k=n; k<this.selection.length; k++)
-			{	Q[k][n] = this.innerProd (this.combinations[this.selection[k]], 
-							     	this.combinations[this.selection[n]])
+			{	Q[k][n] = this.innerProd (this.probabilities[this.selection[k]], 
+							     	this.probabilities[this.selection[n]])
 				Q[n][k] = Q[k][n]
 			}
 	}
-
 	this.p = solveMatrixEquation(Q,b)
-	console.log("solution is is \n"+this.p)
+	/*console.log("Q is \n")
+	for (let i =0; i<Q.length; i++)
+	console.log(Q[i])
+	console.log("b is \n"+b)
+
+	console.log("solution is \n"+this.p)
+	*/
 }
 
 groups.prototype.penalty = function(combi)
@@ -610,6 +615,7 @@ groups.prototype.chancesTable = function(nDigits = 3)
 
 	var totalCandidates = 0
 	var totalAdmitted = 0
+	var rtsqError = 0
 	for (j=0; j<this.groupSizes.length; j++)
 	{	let nCandidates = (this.nGroups[j]*this.groupSizes[j])
 		let expectedGroups = (this.indivProba[j]*this.nGroups[j])
@@ -627,9 +633,11 @@ groups.prototype.chancesTable = function(nDigits = 3)
 			+ (this.groupSizes[j]) + " = "
 			+ expectedAdmitted.toFixed(nDigits)
 			+ "</td> </tr> \n"
+		rtsqError += Math.pow(this.indivProba[j]-this.pAim,2) * this.nIndividuals[j]
 	}
-	result += "<tr><th align='right'> total: "+totalCandidates+"</th>" +
-		  "<th align='right'>average P: "+this.pAim.toFixed(nDigits) + "</th><td></td>" +
+	result += "<tr><th align='right'> total: "+this.nCandidates+"</th>" + //+totalCandidates+"</th>" +
+		  "<th align='right'>average P: "+this.pAim.toFixed(nDigits) + "</th>" +
+		  "<th align='right'>weighted error: "+rtsqError.toFixed(nDigits) + "</th>" +
 		"<th></th>" +
 		  "<th align='right'> total: "+totalAdmitted.toFixed(9) + "</th>" +
 		"</table>"
