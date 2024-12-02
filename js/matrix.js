@@ -106,9 +106,14 @@ function findMaxAbsElement(Matrix, minRow = 0, upperRow =null, minCol = 0, upper
 }
 
 // Function to solve a square matrix equation A * X = B
+// The indexes are A[row][column].
+// X.length = number of columns, B.length = number of rows = A.length
+// There may be not be more columns than rows.
+// The matrix can be singular, but if A X = B has no solution, an error is thrown.
 function solveMatrixEquation(A, B, epsilon = 1e-12, margin =5)
 // epsilon should depend on the machine precision, and perhaps on the norm of the matrix.
-// margin should depend on the norms of the vector and of the matrix.
+// When pivoting a singular matrix, elements under the last relevant row should be smaller than epsilon.
+// Corresponding elements of B should be smaller than margin * epsilon.
  {
   const n = A.length;
   var debugText = "The matrix was non-singular, no entries have been removed"
@@ -145,9 +150,10 @@ function solveMatrixEquation(A, B, epsilon = 1e-12, margin =5)
 	    // Perform elimination to make all values below the pivot zero
 	    for (let row = col + 1; row < n; row++) {
 	      const factor = augmentedMatrix[row][col] / augmentedMatrix[col][col];
-	      for (let j = col; j <= n; j++) {
+	      for (let j = col+1; j <= n; j++) {
 		augmentedMatrix[row][j] -= factor * augmentedMatrix[col][j];
 	      }
+		augmentedMatrix[row][col] = 0 // if not zero, it's a round-off error
 	    }
 	}
 	else // all remaining elements are smaller than epsilon
@@ -156,11 +162,11 @@ function solveMatrixEquation(A, B, epsilon = 1e-12, margin =5)
 	    // Perform elimination to make all values below the pivot zero
 	    for (let row = col ; row < n; row++) {
 	      for (let j = col; j <= n; j++) {
-		if (	augmentedMatrix[row][j] > epsilon * margin)
+		if (	Math.abs(augmentedMatrix[row][j]) > epsilon * margin)
 		{	console.log("problem: matrix element ["+row+"]["+j+"] is "+augmentedMatrix[row][j]+ " > epsilon="+epsilon)
 			throw ("singular matrix, no solution")
 		}
-		augmentedMatrix[row][j] = 0;
+		augmentedMatrix[row][j] = 0;// if not zero, it's a round-off error
 	      }
 	    }
 	    col = n // we can finish
@@ -216,6 +222,7 @@ function solveMatrixEquationWithPartialPivoting(A, B) {
       for (let j = col; j <= n; j++) {
         augmentedMatrix[row][j] -= factor * augmentedMatrix[col][j];
       }
+      augmentedMatrix[row][col] = 0 // if not zero, it's a round-off error
     }
   }
 
@@ -408,7 +415,6 @@ function leastSquaresForUnitIP(A, B, metricA = null) {
   // Step 3: Solve the normal equation (A^T * A) * X = A^T * B
   return solveMatrixEquation(ATA, ATB);
 }
-
 /*
 // Example usage
 let A = [
