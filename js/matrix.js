@@ -110,10 +110,10 @@ function findMaxAbsElement(Matrix, minRow = 0, upperRow =null, minCol = 0, upper
 // The matrix can be singular, but if A X = B has no solution, an error is thrown.
 // The indexes are A[row][column].
 // X.length = number of columns, B.length = number of rows = A.length
-function solveMatrixEquation(A, B, epsilon = 1e-12, margin =5)
 // epsilon should depend on the machine precision, and perhaps on the norm of the matrix.
 // When pivoting a singular matrix, elements under the last relevant row should be smaller than epsilon.
 // Corresponding elements of B should be smaller than margin * epsilon.
+function solveMatrixEquation(A, B, epsilon = 1e-12, margin =5)
 {
   const nRows = A.length;
   var dimension = 0 // number of independent vectors
@@ -123,8 +123,6 @@ function solveMatrixEquation(A, B, epsilon = 1e-12, margin =5)
   }
   let colPerms = Array.from(Array(nCols).keys())
   // Augment matrix A with column vector B
-//	console.log ("A is ")
-//	for (let j = 0; j<nRows; j++) {console.log(A[j])}
   let augmentedMatrix = A.map((row, i) => [...row, B[i]]);
   
   // Forward elimination with partial pivoting
@@ -133,7 +131,6 @@ function solveMatrixEquation(A, B, epsilon = 1e-12, margin =5)
 	let pivotOrdinates = findMaxAbsElement(augmentedMatrix, col, nRows, col, nCols)
 	let pivotRow = pivotOrdinates.rowIndex
 	let pivotColumn = pivotOrdinates.columnIndex
-//	console.log('pitvot row,col = '+pivotRow+" , "+pivotColumn)
     // Swap the current row with the pivot row (this doesn't change the solution)
     if (pivotRow !== col) {
       let temp = augmentedMatrix[col];
@@ -146,7 +143,7 @@ function solveMatrixEquation(A, B, epsilon = 1e-12, margin =5)
 			augmentedMatrix[i][col] = augmentedMatrix[i][pivotColumn]
 			augmentedMatrix[i][pivotColumn] = temp
 		}
-		// store the column colPerms
+		// store the column permutations
 		{  let temp = colPerms[ col] 
 			colPerms[ col] = colPerms[pivotColumn]
 			colPerms[pivotColumn] = temp
@@ -173,8 +170,6 @@ function solveMatrixEquation(A, B, epsilon = 1e-12, margin =5)
 	    col = nCols // leave the loop
 	}
   }
-//	console.log ("augmentedMatrix after eliminations is ")
-//	for (let j = 0; j<nRows; j++) {console.log(augmentedMatrix[j])}
 
 	// if the equation has a valid solution, all remaining elements in the last column are zero.
 	// We must check, because there is no back-substitution for those elements
@@ -199,90 +194,53 @@ function solveMatrixEquation(A, B, epsilon = 1e-12, margin =5)
 	for (i = 0; i<nCols ; i++)
 	{  result [colPerms[i]] = X[i]
 	}
-	// console.log("colPerms is "+colPerms)
   return result;
 }
 
-function transpose(M)
-{	// number of columns of the transpose
-	nCols = M.length // = number of rows of M
-	if (0 == nCols)
-	{	return []
-	}
-	// else
-	nRows = M[0].length // = number of columns of M
-	for (col = 0; col < nCols; col++)
-	    {
-		if (M[col].length != nRows )
-		    {   throw ("inconsistent row length at row "+ row + "of M")
-			return 
-		    }
-	}
-	result = Array(nRows)
-	for (row = 0; row < nRows ; row ++)
-	{
-	    result[row]=Array(nCols)
-	    for (col = 0; col < nCols; col++)
-	    {
-		result[row][col] = M[col][row]
-	    }
-	}
-	return result
-}
-
-// The indexes are A[row][column].
-// X.length = number of columns, B.length = number of rows = A.length
-function findBasis(A, epsilon = 1e-12)
-// epsilon should depend on the machine precision, and perhaps on the norm of the matrix.
-// When pivoting a singular matrix, elements under the last relevant row should be smaller than epsilon.
-// Corresponding elements of B should be smaller than margin * epsilon.
+// find independent rows of matrix M
+function findBasis(matrix, epsilon = 1e-12)
 {
-  const nRows = A.length;
+  const nRows = matrix.length;
   var dimension = 0 // number of independent vectors
   if (0<nRows)
   {	var nCols = A[0].length
 	dimension = nCols 
   }
   let rowPerms = Array.from(Array(nRows).keys())
-  // Augment matrix A with column vector B
-//	console.log ("A is ")
-//	for (let j = 0; j<nRows; j++) {console.log(A[j])}
-  let augmentedMatrix = A.map((row, i) => [...row, B[i]]);
   
   // Forward elimination with partial pivoting
   for (let col = 0; col < nCols; col++) {
     // find the pivot element
-	let pivotOrdinates = findMaxAbsElement(augmentedMatrix, col, nRows, col, nCols)
+	let pivotOrdinates = findMaxAbsElement(matrix, col, nRows, col, nCols)
 	let pivotRow = pivotOrdinates.rowIndex
 	let pivotColumn = pivotOrdinates.columnIndex
-//	console.log('pitvot row,col = '+pivotRow+" , "+pivotColumn)
     // Swap the current row with the pivot row (this doesn't change the solution)
     if (pivotRow !== col) {
-      let temp = augmentedMatrix[col];
-      augmentedMatrix[col] = augmentedMatrix[pivotRow];
-      augmentedMatrix[pivotRow] = temp;
+      let temp = matrix[col];
+      matrix[col] = matrix[pivotRow];
+      matrix[pivotRow] = temp;
+	// store the row permutations
+      temp = rowPerms[ col] 
+      rowPerms[ col] = rowPerms[pivotRow]
+      rowPerms[pivotRow] = temp
     }
+
 	if (pivotColumn !== col)
 	{	for (let i = 0; i<nRows; i++)
-		{	temp = augmentedMatrix[i][col]
-			augmentedMatrix[i][col] = augmentedMatrix[i][pivotColumn]
-			augmentedMatrix[i][pivotColumn] = temp
-		}
-		// store the column colPerms
-		{  let temp = colPerms[ col] 
-			colPerms[ col] = colPerms[pivotColumn]
-			colPerms[pivotColumn] = temp
+		{	temp = matrix[i][col]
+			matrix[i][col] = matrix[i][pivotColumn]
+			matrix[i][pivotColumn] = temp
 		}
 	}
 
-	if (epsilon < Math.abs(augmentedMatrix[col][col]))
+	if (epsilon < Math.abs(matrix[col][col]))
 	{
 	    // Perform elimination to make all values below the pivot zero
 	    for (let row = col + 1; row < nRows; row++) {
-	      const factor = augmentedMatrix[row][col] / augmentedMatrix[col][col];
-		  augmentedMatrix[row][col] = 0 // if not zero, it's a round-off error
-	      for (let j = col+1; j <= nCols; j++) {
-			augmentedMatrix[row][j] -= factor * augmentedMatrix[col][j];
+	      const factor = matrix[row][col] / matrix[col][col];
+		  matrix[row][col] = 0 // if not zero, it's a round-off error
+	      for (let j = col+1; j < nCols; j++) {
+			matrix[row][j] -= factor * matrix[col][j];
 	      }
 	    }
 	}
@@ -295,34 +253,12 @@ function findBasis(A, epsilon = 1e-12)
 	    col = nCols // leave the loop
 	}
   }
-//	console.log ("augmentedMatrix after eliminations is ")
-//	for (let j = 0; j<nRows; j++) {console.log(augmentedMatrix[j])}
 
-	// if the equation has a valid solution, all remaining elements in the last column are zero.
-	// We must check, because there is no back-substitution for those elements
-	for (let row = dimension ; row < nRows; row++) {
-		if (Math.abs(augmentedMatrix[row][nCols]) > epsilon * margin)
-		{	throw ("error: singular matrix,  no solution: After elimination, vector element ["+row+"] is "+augmentedMatrix[row][nCols]+ " > "+epsilon * margin+" =epsilon * margin")
-		}
-	}
-
-  // Back substitution
-  let X = new Array(nCols).fill(0);
-  for (let row = dimension - 1; row >= 0; row--) {
-    let sum = augmentedMatrix[row][nCols]; // Right-hand side of the equation
-    for (let col = row + 1; col < dimension; col++) {
-      sum -= augmentedMatrix[row][col] * X[col];
-    }
-    if ( 0!=sum) // then 0!=augmentedMatrix[row][row])
-    X[row] = sum / augmentedMatrix[row][row];
-  }
   // correct for the permutation of the columns
-	var result = Array(nCols)
-	for (i = 0; i<nCols ; i++)
-	{  result [colPerms[i]] = X[i]
-	}
-	// console.log("colPerms is "+colPerms)
-  return result;
+	rowPerms.splice(dimension)
+
+	console.log("dimension is "+dimension+", the independent vectors have indexes "+rowPerms)
+  return rowPerms;
 }
 
 function transpose(M)
@@ -351,6 +287,7 @@ function transpose(M)
 	}
 	return result
 }
+
 
 function matrixProduct(M1, M2)
 {
@@ -503,7 +440,7 @@ function leastSquaresForUnitIP(A, B, metricA = null) {
   return solveMatrixEquation(ATA, ATB);
 }
 
-/*
+
 // Example usage
 let A = [
   [2, 1],
@@ -515,9 +452,9 @@ let A = [
 let B = [5, 6, 7, 8];
 
 const leastSquaresSolution = leastSquaresForUnitIP(A, B);
-console.log("Least Squares Solution:", leastSquaresSolution);
+console.log("========== Least Squares Solution:", leastSquaresSolution);
 
-
+console.log("========== matrix with row and column pivoting:")
 // matrix designed for row and column pivoting
 A = [
   [2, 4, 4, 7, 0],
@@ -526,6 +463,7 @@ A = [
   [3, 2, 5, 0, 8],
   [4, 1, 3, 3, 9]
 ];
+findBasis(A)
 B = [5, 6, 7, 8, 9];
 
 console.log("correct solution: "+solveMatrixEquation(A,B))
@@ -533,6 +471,7 @@ X = solveMatrixEquation(A,B)
 console.log("experimental solution: "+X)
 console.log("controle: "+B+" = "+X.multiplyByMatrix(A))
 
+console.log("========== now a singular matrix:")
 // now a singular matrix - with a possible solution
 A = [
   [2, 4, 4, 7, 0],
@@ -541,13 +480,17 @@ A = [
   [2, 9, 0, 1, 4],
   [4, 8, 8, 2, 9],
 ];
+findBasis(A)
 B = [5, 6, 7, 8, 9].multiplyByMatrix(A)
 console.log("B for square singular matrix: "+B)
 X = solveMatrixEquation(A,B)
-console.log("now a singular matrix: X ="+ X)
+console.log(" X ="+ X)
 console.log("controle: "+B+" = "+X.multiplyByMatrix(A))
 
 // now a singular matrix - with a possible solution
+
+B = [5, 6, 7, 8, 9].multiplyByMatrix(A)
+console.log("========== B for 6 by 5 rectangular singular matrix of rank 4: "+B)
 A = [
   [2, 4, 4, 7, 0],
   [3, 2, 5, 0, 8],
@@ -556,12 +499,12 @@ A = [
   [2, 9, 0, 1, 4],
   [4, 8, 8, 2, 9],
 ];
-B = [5, 6, 7, 8, 9].multiplyByMatrix(A)
-console.log("B for 6 by 5 rectangular singular matrix of rank 4: "+B)
+findBasis(A)
 X = solveMatrixEquation(A,B)
 console.log("X ="+ X)
 console.log("controle: "+B+" = "+X.multiplyByMatrix(A))
 
+console.log("==========This singular 6x5 matrix equation should have a solution:")
 // now a singular of rank = nColumns that has a solution
 A = [
   [2, 4, 4, 7, 0],
@@ -571,18 +514,17 @@ A = [
   [4, 1, 3, 3, 9],
   [3, 1, 3, 5, 2]
 ];
-
+findBasis(A)
 B = [5, 6, 7, 8, 9].multiplyByMatrix(A);
-console.log("This singular matrix should have a solution:")
 X = solveMatrixEquation(A,B)
 console.log("X ="+ X)
 console.log("controle: "+B+" = "+X.multiplyByMatrix(A))
 
 B = [118,87,108,134,153,100];
-console.log("This singular matrix should not have a solution:")
+console.log("This  equation should not have a solution:")
 X = solveMatrixEquation(A,B)
 console.log("X ="+ X)
 console.log("controle: "+B+" = "+X.multiplyByMatrix(A))
 
-
+/*
 */
