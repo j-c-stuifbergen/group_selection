@@ -117,8 +117,9 @@ function solveMatrixEquation(A, B, epsilon = 1e-12, margin =5)
 {
   const nRows = A.length;
   var dimension = 0 // number of independent vectors
+  var nCols = 0
   if (0<nRows)
-  {	var nCols = A[0].length
+  {	nCols = A[0].length
 	dimension = nCols 
   }
   let colPerms = Array.from(Array(nCols).keys())

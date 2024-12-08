@@ -226,8 +226,11 @@ function testExistence()
    if (!setCombinations()) {return;	}
    optimizer.setProbabilities() // the probabilities for groups in a combination
    optimizer.setIndividuals() // required for innerprod
-   optimizer.findMinimum()
+   // optimizer.findMinimum()
+   optimizer.testExistence()
+	displayText += "<br>  "+optimizer.resultsTable(5)
    showQuality()
+
    MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById("output")]);
 }
 

@@ -54,6 +54,7 @@ function groups(nPlaces, groupInfo) // groupSizes, nGroups)
 	this.indivProbaDevi = [] // relative deviation from the average probability
 	this.combinations = [] // an array of combinations that fill all places
 	this.probabilities = [] // same dimensions as this.combinations. 
+	// this.probaComparative = [] // used in testExistence
 	this.selection = [] // can contain indices that refer to this.combinations
 	this.availabel = [] // the indices that are not in selection
 	this.p = [] // weights, belonging to the selection.
@@ -179,6 +180,62 @@ Note: such a minimum always exists.
 
 	console.log("solution is \n"+this.p)
 	*/
+}
+groups.prototype.testExistence = function()
+/* find coefficients that minimize the difference between realized and aimed probabilities,
+without requiring that the probabilities will add up to 1
+Note: such a minimum always exists.
+We require that the probabilities add up to 1, so we start with the best vector ("b")
+We then subtract this from the aimed probability ("a"), and perform a Least Squares routine
+to calculate the nearest solution.
+
+   This is a matrix equation for the weights:
+       Q (p-b)= c
+       Q[k,n] = < q[k]-b, q[n]-b > (inner product defined by nIndividuals[])
+       c[n]   = < a-b   , q[n]-b >
+ Note that the matrix can be singular, but still has a solution.   
+*/
+{	var aimVector = new Array(this.groupSizes.length).fill(this.pAim)
+
+	this.availabel = Array.from(Array(this.combinations.length).keys())
+
+	this.selectLowestPenalty(true)
+	var probaOfBest = this.probabilities[this.selection[0]]
+	var aimDifference = aimVector.subtract(probaOfBest)
+
+	console.log("differences")
+	var differences = Array(this.availabel.length)
+	for (let j = 0 ; j< differences.length; j++)
+	{	differences[j] = this.probabilities[this.availabel[j]].subtract(probaOfBest)
+		console.log(differences[j])
+	}
+
+	var c = Array(this.availabel.length)
+	var Q=Array(differences.length).fill(0).map(() => new Array(differences.length))
+	for (var n=0; n< differences.length ; n++)
+	{	c[n] = this.innerProd (aimDifference, differences[n])
+	 	for(var k=n; k<differences.length; k++)
+			{	Q[k][n] = this.innerProd (differences[k], 
+							     	differences[n])
+				Q[n][k] = Q[k][n]
+			}
+	}
+	pPlus = solveMatrixEquation(Q,c)
+	console.log("pPlus is "+pPlus)
+	console.log("pPlus.length = "+pPlus.length)
+	console.log("probaOfBest + aimDifference = "+probaOfBest+" + "+aimDifference+" = "+aimVector+" = aimVector")	
+	pBest = 1
+	for (let j = 0; j < pPlus.length ; j++)
+	{	pBest -= pPlus[j]
+	}
+	
+	this.selection = this.selection.concat(this.availabel)
+	pPlus.unshift(pBest)
+	console.log("pPlus na unshfit is "+pPlus)
+	console.log("pPlus.length = "+pPlus.length)
+
+	console.log("solution if negative probabilities were allowed: "+pPlus)
+	this.p = pPlus
 }
 
 groups.prototype.penalty = function(combi)
