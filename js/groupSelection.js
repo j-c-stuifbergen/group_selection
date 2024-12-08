@@ -54,7 +54,7 @@ function groups(nPlaces, groupInfo) // groupSizes, nGroups)
 	this.indivProbaDevi = [] // relative deviation from the average probability
 	this.combinations = [] // an array of combinations that fill all places
 	this.probabilities = [] // same dimensions as this.combinations. 
-	// this.probaComparative = [] // used in testExistence
+	this.differences = [] // differences with proba of first selected combination
 	this.selection = [] // can contain indices that refer to this.combinations
 	this.availabel = [] // the indices that are not in selection
 	this.p = [] // weights, belonging to the selection.
@@ -200,42 +200,57 @@ to calculate the nearest solution.
 	this.availabel = Array.from(Array(this.combinations.length).keys())
 
 	this.selectLowestPenalty(true)
-	var probaOfBest = this.probabilities[this.selection[0]]
-	var aimDifference = aimVector.subtract(probaOfBest)
+	this.makeDifferences()
+	var aimDifference = aimVector.subtract(this.probabilities[this.selection[0]])
 
-	console.log("differences")
-	var differences = Array(this.availabel.length)
-	for (let j = 0 ; j< differences.length; j++)
-	{	differences[j] = this.probabilities[this.availabel[j]].subtract(probaOfBest)
-		console.log(differences[j])
-	}
-
-	var c = Array(this.availabel.length)
-	var Q=Array(differences.length).fill(0).map(() => new Array(differences.length))
-	for (var n=0; n< differences.length ; n++)
-	{	c[n] = this.innerProd (aimDifference, differences[n])
-	 	for(var k=n; k<differences.length; k++)
-			{	Q[k][n] = this.innerProd (differences[k], 
-							     	differences[n])
+	var c = Array(this.differences.length)
+	var Q=Array(this.differences.length).fill(0).map(() => new Array(this.differences.length))
+	for (var n=0; n< this.differences.length ; n++)
+	{	c[n] = this.innerProd (aimDifference, this.differences[n])
+	 	for(var k=n; k<this.differences.length; k++)
+			{	Q[k][n] = this.innerProd (this.differences[k], 
+							     	this.differences[n])
 				Q[n][k] = Q[k][n]
 			}
 	}
 	pPlus = solveMatrixEquation(Q,c)
 	console.log("pPlus is "+pPlus)
 	console.log("pPlus.length = "+pPlus.length)
-	console.log("probaOfBest + aimDifference = "+probaOfBest+" + "+aimDifference+" = "+aimVector+" = aimVector")	
+	console.log("probaOfBest + aimDifference = "+this.probabilities[this.selection[0]]+" + "+aimDifference+" = "+aimVector+" = aimVector")	
 	pBest = 1
 	for (let j = 0; j < pPlus.length ; j++)
 	{	pBest -= pPlus[j]
 	}
 	
-	this.selection = this.selection.concat(this.availabel)
+	this.p = Array(this.combinations.length).fill(0)
+	for (let j=0; j < this.availabel.length ; j++)
+	{	this.p[this.availabel[j]]= pPlus[j]
+		this.selection.push(this.availabel[j])
+	}
+	this.p[this.selection[0]] = pBest
+
 	pPlus.unshift(pBest)
 	console.log("pPlus na unshfit is "+pPlus)
 	console.log("pPlus.length = "+pPlus.length)
 
 	console.log("solution if negative probabilities were allowed: "+pPlus)
 	this.p = pPlus
+}
+
+groups.prototype.makeDifferences = function(probaVector= null, selection = null)
+{
+	if (null == probaVector)
+	{	probaVector = this.probabilities[this.selection[0]]
+	}
+	if (null == selection)
+	{	selection = this.availabel
+	}
+	// console.log("differences")
+	this.differences = Array(selection.length)
+	for (let j = 0 ; j< this.differences.length; j++)
+	{	this.differences[j] = this.probabilities[selection[j]].subtract(probaVector)
+		// console.log(this.differences[j])
+	}
 }
 
 groups.prototype.penalty = function(combi)
@@ -313,6 +328,67 @@ groups.prototype.selectNSimilarCombinations = function(N = 6)
 }
 
 groups.prototype.selectBestCombinations = function(epsilon = 1e-6)
+{	console.log("=== find the best combinations by least squares ===")
+
+	aimVector = new Array(this.groupSizes.length).fill(this.pAim)
+	console.log("aimVector " +aimVector)
+	this.setProbabilities()
+
+	pIndividu = Array(this.groupSizes.length).fill(0)
+
+	this.selection = []
+	this.availabel = Array.from(Array(this.combinations.length).keys())
+	this.p = []		
+	
+	this.selectLowestPenalty(true) 
+	this.makeDifferences()
+	var aimDifference = aimVector.subtract(this.probabilities[this.selection[0]])
+	// perform projection, so the inner product with pDiff will be 0
+	this.p = leastSquaresForDiagonalIP(
+		this.probabilityMatrix(), aimVector, this.nIndividuals )
+
+	while (true)
+	{	 
+		pIndividu.fill(0)
+		for (let i=0; i<this.p.length ; i++)	
+		{	pIndividu = pIndividu.add(
+			this.probabilities[ this.selection[i]]. timesScalar(this.p[i]))
+		}
+
+		pDiff = aimVector.subtract(pIndividu)
+		penalty = this.innerProd(pDiff, pDiff)
+		// penalty = this.penalty(pIndividu)
+		console.log("weights for the combinations are " + this.p)
+		console.log("penalty =" + penalty + " ----- pDiff =" + pDiff)
+		
+		if ( penalty < epsilon) // objectives reached!
+		{  	break
+		}
+		if (this.p.length >= this.groupSizes.length) 
+		{ 	// I can't add another vector for Least Squares
+			break
+		}
+
+		ipResult = this.selectByIP(pDiff, true)
+		if (ipResult.index < 0)
+		{	// no vector has been found
+			break
+		}
+		if (epsilon < ipResult.product )
+		{	this.p = leastSquaresForDiagonalIP(
+				this.probabilityMatrix(), aimVector, this.nIndividuals )
+		}
+		else
+		{	// The new vector doesn't contribute significantly
+			this.p.push(0)
+			break
+		}
+	}
+	let noNegatives = this.makeDistribution() 		
+	return noNegatives && (penalty < epsilon)
+}
+
+groups.prototype.selectBestCombinationsOld = function(epsilon = 1e-6)
 {	console.log("=== find the best combinations by least squares ===")
 
 	aimVector = new Array(this.groupSizes.length).fill(this.pAim)
